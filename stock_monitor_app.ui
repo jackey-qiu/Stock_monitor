@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1920</width>
-    <height>1027</height>
+    <height>1040</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -45,6 +45,30 @@
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout">
           <item>
+           <widget class="QComboBox" name="comboBox_index_type">
+            <item>
+             <property name="text">
+              <string>上证指数</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>上证50</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>沪深300</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>科创50</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item>
            <widget class="QLabel" name="label_2">
             <property name="font">
              <font>
@@ -65,6 +89,23 @@
            </widget>
           </item>
           <item>
+           <widget class="QLabel" name="label_23">
+            <property name="text">
+             <string>开盘价</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="lineEdit_open_price">
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QLabel" name="label_3">
             <property name="text">
              <string>收盘价</string>
@@ -72,7 +113,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QLineEdit" name="lineEdit">
+           <widget class="QLineEdit" name="lineEdit_close_price">
             <property name="maximumSize">
              <size>
               <width>100</width>
@@ -89,7 +130,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QLineEdit" name="lineEdit_2">
+           <widget class="QLineEdit" name="lineEdit_high_price">
             <property name="maximumSize">
              <size>
               <width>100</width>
@@ -106,7 +147,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QLineEdit" name="lineEdit_3">
+           <widget class="QLineEdit" name="lineEdit_low_price">
             <property name="maximumSize">
              <size>
               <width>100</width>
@@ -123,7 +164,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QLineEdit" name="lineEdit_4">
+           <widget class="QLineEdit" name="lineEdit_change_rate">
             <property name="maximumSize">
              <size>
               <width>100</width>
@@ -140,7 +181,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QLineEdit" name="lineEdit_6">
+           <widget class="QLineEdit" name="lineEdit_volume">
             <property name="maximumSize">
              <size>
               <width>100</width>
@@ -157,7 +198,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QLineEdit" name="lineEdit_5">
+           <widget class="QLineEdit" name="lineEdit_amount">
             <property name="maximumSize">
              <size>
               <width>100</width>
@@ -198,35 +239,35 @@
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_2">
           <item>
-           <widget class="QPushButton" name="pushButton">
+           <widget class="QPushButton" name="pushButton_last_week">
             <property name="text">
              <string>过去一周</string>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="pushButton_2">
+           <widget class="QPushButton" name="pushButton_last_month">
             <property name="text">
              <string>过去一个月</string>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="pushButton_3">
+           <widget class="QPushButton" name="pushButton_last_three_month">
             <property name="text">
              <string>过去三个月</string>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="pushButton_4">
+           <widget class="QPushButton" name="pushButton_last_six_month">
             <property name="text">
              <string>过去半年</string>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="pushButton_5">
+           <widget class="QPushButton" name="pushButton_last_year">
             <property name="text">
              <string>过去一年</string>
             </property>
@@ -240,7 +281,11 @@
            </widget>
           </item>
           <item>
-           <widget class="QSpinBox" name="spinBox"/>
+           <widget class="QSpinBox" name="spinBox_previous_years">
+            <property name="minimum">
+             <number>1</number>
+            </property>
+           </widget>
           </item>
           <item>
            <widget class="QLabel" name="label_9">
@@ -250,7 +295,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="pushButton_6">
+           <widget class="QPushButton" name="pushButton_extract_1">
             <property name="text">
              <string>提取</string>
             </property>
@@ -271,7 +316,17 @@
            </widget>
           </item>
           <item>
-           <widget class="QSpinBox" name="spinBox_2"/>
+           <widget class="QLineEdit" name="lineEdit_begin_date">
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>2010-01-01</string>
+            </property>
+           </widget>
           </item>
           <item>
            <widget class="QLabel" name="label_12">
@@ -281,10 +336,20 @@
            </widget>
           </item>
           <item>
-           <widget class="QSpinBox" name="spinBox_3"/>
+           <widget class="QLineEdit" name="lineEdit_end_date">
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>2012-12-01</string>
+            </property>
+           </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="pushButton_plot_dapan_within">
+           <widget class="QPushButton" name="pushButton_exract_2">
             <property name="text">
              <string>提取</string>
             </property>
@@ -306,11 +371,38 @@
          </layout>
         </item>
         <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_5">
+          <item>
+           <widget class="QLabel" name="label_24">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>单点信息</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="lineEdit_single_point">
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>16777215</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
          <widget class="GraphicsLayoutWidget" name="mplwidget_dapan" native="true">
           <property name="minimumSize">
            <size>
             <width>0</width>
-            <height>100</height>
+            <height>250</height>
            </size>
           </property>
          </widget>
@@ -348,7 +440,7 @@
         <item>
          <widget class="QTabWidget" name="tabWidget_2">
           <property name="currentIndex">
-           <number>1</number>
+           <number>3</number>
           </property>
           <widget class="QWidget" name="tab_3">
            <attribute name="title">
@@ -505,7 +597,7 @@
             <item>
              <widget class="QTabWidget" name="tabWidget">
               <property name="currentIndex">
-               <number>0</number>
+               <number>1</number>
               </property>
               <widget class="QWidget" name="tab">
                <attribute name="title">
@@ -530,6 +622,16 @@
            <attribute name="title">
             <string>基金对比</string>
            </attribute>
+          </widget>
+          <widget class="QWidget" name="tab_6">
+           <attribute name="title">
+            <string>终端控制</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_5">
+            <item>
+             <widget class="TerminalWidget" name="widget_terminal" native="true"/>
+            </item>
+           </layout>
           </widget>
          </widget>
         </item>
@@ -573,6 +675,12 @@
    <class>GraphicsLayoutWidget</class>
    <extends>QWidget</extends>
    <header location="global">pyqtgraph.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>TerminalWidget</class>
+   <extends>QWidget</extends>
+   <header location="global">terminal_widget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
