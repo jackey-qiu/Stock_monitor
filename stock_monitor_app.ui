@@ -174,6 +174,23 @@
            </widget>
           </item>
           <item>
+           <widget class="QLabel" name="label_25">
+            <property name="text">
+             <string>振幅</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="lineEdit_amp">
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QLabel" name="label_16">
             <property name="text">
              <string>总市值</string>
@@ -440,7 +457,7 @@
         <item>
          <widget class="QTabWidget" name="tabWidget_2">
           <property name="currentIndex">
-           <number>3</number>
+           <number>1</number>
           </property>
           <widget class="QWidget" name="tab_3">
            <attribute name="title">
@@ -468,17 +485,34 @@
                </widget>
               </item>
               <item>
-               <widget class="QLineEdit" name="lineEdit_7">
+               <widget class="QLineEdit" name="lineEdit_fund_code">
                 <property name="maximumSize">
                  <size>
-                  <width>200</width>
+                  <width>100</width>
                   <height>16777215</height>
                  </size>
                 </property>
                </widget>
               </item>
               <item>
-               <widget class="QPushButton" name="pushButton_8">
+               <widget class="QLabel" name="label_26">
+                <property name="text">
+                 <string>基金名称</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="lineEdit_fund_name">
+                <property name="maximumSize">
+                 <size>
+                  <width>150</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButton_extract_3">
                 <property name="text">
                  <string>提取基金信息</string>
                 </property>
@@ -519,7 +553,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QLineEdit" name="lineEdit_8">
+               <widget class="QLineEdit" name="lineEdit_fund_net_wealth">
                 <property name="maximumSize">
                  <size>
                   <width>100</width>
@@ -536,7 +570,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QLineEdit" name="lineEdit_9">
+               <widget class="QLineEdit" name="lineEdit_fund_accumulate_wealth">
                 <property name="maximumSize">
                  <size>
                   <width>100</width>
@@ -553,7 +587,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QLineEdit" name="lineEdit_10">
+               <widget class="QLineEdit" name="lineEdit_fund_change">
                 <property name="maximumSize">
                  <size>
                   <width>100</width>
@@ -570,12 +604,19 @@
                </widget>
               </item>
               <item>
-               <widget class="QLineEdit" name="lineEdit_11">
+               <widget class="QLineEdit" name="lineEdit_fund_total">
                 <property name="maximumSize">
                  <size>
                   <width>100</width>
                   <height>16777215</height>
                  </size>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_27">
+                <property name="text">
+                 <string>亿</string>
                 </property>
                </widget>
               </item>
@@ -597,21 +638,27 @@
             <item>
              <widget class="QTabWidget" name="tabWidget">
               <property name="currentIndex">
-               <number>1</number>
+               <number>0</number>
               </property>
               <widget class="QWidget" name="tab">
                <attribute name="title">
-                <string>基金价值波动图</string>
+                <string>基金波动图</string>
                </attribute>
                <layout class="QHBoxLayout" name="horizontalLayout_6">
                 <item>
-                 <widget class="MplWidget" name="mpl_widget_jijing" native="true"/>
+                 <widget class="GraphicsLayoutWidget" name="mpl_widget_jijing" native="true"/>
                 </item>
                </layout>
               </widget>
               <widget class="QWidget" name="tab_2">
                <attribute name="title">
-                <string>本基金基本信息</string>
+                <string>基金经理</string>
+               </attribute>
+               <layout class="QVBoxLayout" name="verticalLayout_6"/>
+              </widget>
+              <widget class="QWidget" name="tab_9">
+               <attribute name="title">
+                <string>持仓信息</string>
                </attribute>
               </widget>
              </widget>
@@ -665,12 +712,6 @@
   </widget>
  </widget>
  <customwidgets>
-  <customwidget>
-   <class>MplWidget</class>
-   <extends>QWidget</extends>
-   <header>mplwidget.h</header>
-   <container>1</container>
-  </customwidget>
   <customwidget>
    <class>GraphicsLayoutWidget</class>
    <extends>QWidget</extends>

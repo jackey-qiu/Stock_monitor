@@ -96,6 +96,7 @@ class MyMainWindow(QMainWindow):
         self.pushButton_last_three_month.clicked.connect(lambda:self.plot_dapan_profile(code = data_extractor.index_code_map[self.comboBox_index_type.currentText()], start = (datetime.datetime.today()-datetime.timedelta(90)).strftime('%Y-%m-%d'), end = datetime.datetime.today().strftime('%Y-%m-%d')))
         self.pushButton_last_six_month.clicked.connect(lambda:self.plot_dapan_profile(code = data_extractor.index_code_map[self.comboBox_index_type.currentText()], start = (datetime.datetime.today()-datetime.timedelta(183)).strftime('%Y-%m-%d'), end = datetime.datetime.today().strftime('%Y-%m-%d')))
         self.pushButton_last_year.clicked.connect(lambda:self.plot_dapan_profile(code = data_extractor.index_code_map[self.comboBox_index_type.currentText()], start = (datetime.datetime.today()-datetime.timedelta(365)).strftime('%Y-%m-%d'), end = datetime.datetime.today().strftime('%Y-%m-%d')))
+        self.pushButton_extract_3.clicked.connect(self.extract_fund_info)
         self.values_000001 = []
         self.values_000016 = []
         self.values_000300 = []
@@ -103,12 +104,27 @@ class MyMainWindow(QMainWindow):
         self.values_specified = []
         self.extract_selected_index()
         self.setup_plot()
+        self.data_extractor = data_extractor
 
     def extract_selected_index(self):
         code = data_extractor.index_code_map[self.comboBox_index_type.currentText()]
         if len(getattr(self,'values_{}'.format(code)))==0:
             setattr(self,'values_{}'.format(code),data_extractor.extract_all_records(code))
         self.set_current_price(code)
+
+    def extract_fund_info(self):
+        js = data_extractor.extract_one_fund(code = self.lineEdit_fund_code.text())
+        self.lineEdit_fund_name.setText(js.eval('fS_name'))
+        self.lineEdit_fund_net_wealth.setText(str(js.eval('Data_netWorthTrend')[-1]['y']))
+        self.lineEdit_fund_accumulate_wealth.setText(str(js.eval('Data_ACWorthTrend')[-1][1]))
+        change = (js.eval('Data_netWorthTrend')[-1]['y'] - js.eval('Data_netWorthTrend')[-2]['y'])/js.eval('Data_netWorthTrend')[-2]['y']*100
+        self.lineEdit_fund_change.setText('{}%'.format(round(change,2)))
+        self.lineEdit_fund_total.setText(str(js.eval('Data_fluctuationScale')['series'][-1]['y']))
+        net_ = js.eval('Data_netWorthTrend')
+        net_values = [each['y'] for each in net_]
+        self.setup_plot_fund()
+        self.ax_fund.plot(net_values, clear = True)
+        self.ax_fund_zoomin.plot(net_values, clear = True)
 
     def setup_plot(self):
         self.lr = pg.LinearRegionItem()
@@ -126,6 +142,22 @@ class MyMainWindow(QMainWindow):
         # self.ax_dapan_zoomin.addItem(self.label)
         self.proxy = pg.SignalProxy(self.ax_dapan_zoomin.scene().sigMouseMoved, rateLimit=60, slot=self.mouseMoved)
 
+    def setup_plot_fund(self):
+        #fund
+        self.lr_fund = pg.LinearRegionItem()
+        self.lr_fund.setZValue(-10)
+        self.ax_fund = self.mpl_widget_jijing.addPlot(clear = True)
+        self.ax_fund_zoomin = self.mpl_widget_jijing.addPlot(clear = True)
+        self.lr_fund.sigRegionChanged.connect(self._updatePlot_fund)
+        self.ax_fund_zoomin.sigXRangeChanged.connect(self._updateRegion_fund)
+        self.ax_fund.addItem(self.lr_fund)
+        self.vLine_fund = pg.InfiniteLine(angle=90, movable=False)
+        self.hLine_fund = pg.InfiniteLine(angle=0, movable=False)
+        self.ax_fund_zoomin.addItem(self.vLine_fund, ignoreBounds=True)
+        self.ax_fund_zoomin.addItem(self.hLine_fund, ignoreBounds=True)
+        #self.label = pg.LabelItem(justify='right')
+        # self.ax_dapan_zoomin.addItem(self.label)
+        self.proxy_fund = pg.SignalProxy(self.ax_fund_zoomin.scene().sigMouseMoved, rateLimit=60, slot=self.mouseMoved_fund)
 
     def set_current_price(self, code):
         if len(getattr(self,'values_{}'.format(code)))==0:
@@ -136,7 +168,13 @@ class MyMainWindow(QMainWindow):
         self.lineEdit_low_price.setText(str(getattr(self,'values_{}'.format(code))['low_price'].iloc[-1]))
         self.lineEdit_volume.setText(str(getattr(self,'values_{}'.format(code))['total'].iloc[-1]))
         self.lineEdit_amount.setText(str(getattr(self,'values_{}'.format(code))['trancaction'].iloc[-1]))
-        self.lineEdit_change_rate.setText('%'+str(getattr(self,'values_{}'.format(code))['rate'].iloc[-1]))
+        self.lineEdit_amp.setText('%'+str(getattr(self,'values_{}'.format(code))['amp'].iloc[-1]))
+        close_current_day = getattr(self,'values_{}'.format(code))['close_price'].iloc[-1]
+        close_last_day = getattr(self,'values_{}'.format(code))['close_price'].iloc[-2]
+        change = str(round((close_current_day - close_last_day)/close_last_day*100,2))
+        # print(getattr(self,'values_{}'.format(code))['rate'].iloc[-1])
+        self.lineEdit_change_rate.setText('%'+change)
+        # self.lineEdit_amp.setText('%'+str(getattr(self,'values_{}'.format(code))['rate'].iloc[-1]))
 
     def mouseMoved(self,evt):
         pos = evt[0]  ## using signal proxy turns original arguments into a tuple
@@ -144,18 +182,31 @@ class MyMainWindow(QMainWindow):
             mousePoint = self.ax_dapan_zoomin.vb.mapSceneToView(pos)
             index = int(mousePoint.x())
             x = (self.values_specified['date']-index).apply(abs).values.argmin() 
-            results = [self.values_specified[each].iloc[x] for each in ['date','open_price','close_price','high_price','low_price','rate','total','trancaction']]
+            results = [self.values_specified[each].iloc[x] for each in ['date','open_price','close_price','high_price','low_price','rate','amp','total','trancaction']]
             results[0] = (datetime.date(1, 1, 1)+datetime.timedelta(int(results[0]))).strftime('%Y-%m-%d')
-            self.lineEdit_single_point.setText('开盘日期:{};    开盘价:{};    收盘价:{};    最高值:{};    最低值:{};    涨跌幅:{}%;    总市值:{};    成交量:{}'.format(*results))
+            self.lineEdit_single_point.setText('开盘日期:{};    开盘价:{};    收盘价:{};    最高值:{};    最低值:{};    涨跌幅:{:4.2f}%;    震幅:{}%;    总市值:{};    成交量:{}'.format(*results))
             # self.label.setText("<span style='font-size: 12pt'>x=%0.1f,   <span style='color: red'>y1=%0.1f</span>,   <span style='color: green'>y2=%0.1f</span>" % (mousePoint.x(), 1, 2))
             self.vLine.setPos(mousePoint.x())
             self.hLine.setPos(mousePoint.y())
 
+    def mouseMoved_fund(self,evt):
+        pos = evt[0]  ## using signal proxy turns original arguments into a tuple
+        if self.ax_fund_zoomin.sceneBoundingRect().contains(pos):
+            mousePoint = self.ax_fund_zoomin.vb.mapSceneToView(pos)
+            self.vLine_fund.setPos(mousePoint.x())
+            self.hLine_fund.setPos(mousePoint.y())
+
     def _updatePlot(self):
         self.ax_dapan_zoomin.setXRange(*self.lr.getRegion(), padding=0)
 
+    def _updatePlot_fund(self):
+        self.ax_fund_zoomin.setXRange(*self.lr_fund.getRegion(), padding=0)
+
     def _updateRegion(self):
         self.lr.setRegion(self.ax_dapan_zoomin.getViewBox().viewRange()[0])
+
+    def _updateRegion_fund(self):
+        self.lr_fund.setRegion(self.ax_fund_zoomin.getViewBox().viewRange()[0])
 
     def plot_dapan_profile(self, code = '000001', start = '2019-01-01', end = '2021-03-22'):
         self.mplwidget_dapan.clear()
