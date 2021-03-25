@@ -122,9 +122,25 @@ class MyMainWindow(QMainWindow):
         self.lineEdit_fund_total.setText(str(js.eval('Data_fluctuationScale')['series'][-1]['y']))
         net_ = js.eval('Data_netWorthTrend')
         net_values = [each['y'] for each in net_]
-        self.setup_plot_fund()
+        #self.setup_plot_fund()
+
+        self.mpl_widget_jijing.clear()
+        self.ax_fund = self.mpl_widget_jijing.addPlot(clear = True)
+        self.ax_fund_zoomin = self.mpl_widget_jijing.addPlot(clear = True)
         self.ax_fund.plot(net_values, clear = True)
         self.ax_fund_zoomin.plot(net_values, clear = True)
+        self.lr_fund = pg.LinearRegionItem()
+        self.lr_fund.setZValue(-10)
+        self.lr_fund.sigRegionChanged.connect(self._updatePlot_fund)
+        self.ax_fund_zoomin.sigXRangeChanged.connect(self._updateRegion_fund)
+        self.ax_fund.addItem(self.lr_fund)
+        self.vLine_fund = pg.InfiniteLine(angle=90, movable=False)
+        self.hLine_fund = pg.InfiniteLine(angle=0, movable=False)
+        self.ax_fund_zoomin.addItem(self.vLine_fund, ignoreBounds=True)
+        self.ax_fund_zoomin.addItem(self.hLine_fund, ignoreBounds=True)
+        #self.label = pg.LabelItem(justify='right')
+        # self.ax_dapan_zoomin.addItem(self.label)
+        self.proxy_fund = pg.SignalProxy(self.ax_fund_zoomin.scene().sigMouseMoved, rateLimit=60, slot=self.mouseMoved_fund)
 
     def setup_plot(self):
         self.lr = pg.LinearRegionItem()
@@ -144,6 +160,7 @@ class MyMainWindow(QMainWindow):
 
     def setup_plot_fund(self):
         #fund
+        self.mpl_widget_jijing.clear()
         self.lr_fund = pg.LinearRegionItem()
         self.lr_fund.setZValue(-10)
         self.ax_fund = self.mpl_widget_jijing.addPlot(clear = True)
