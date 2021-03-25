@@ -76,39 +76,34 @@ var fS_code = "005827";
 /*业绩评价 ['选股能力', '收益率', '抗风险', '稳定性','择时能力']*/var Data_performanceEvaluation = {"avr":"77.50","categories":["选证能力","收益率","抗风险","稳定性","择时能力"],"dsc":["反映基金挑选证券而实现风险\u003cbr\u003e调整后获得超额收益的能力","根据阶段收益评分，反映基金的盈利能力","反映基金投资收益的回撤情况","反映基金投资收益的波动性","反映基金根据对市场走势的判断，\u003cbr\u003e通过调整仓位及配置而跑赢基金业\u003cbr\u003e绩基准的能力"],"data":[80.0,100.0,50.0,50.0,70.0]};
 /*现任基金经理*/var Data_currentFundManager =[{"id":"30189744","pic":"https://pdf.dfcfw.com/pdf/H8_PNG30189744_1.jpg","name":"张坤","star":4,"workTime":"8年又179天","fundSize":"1197.46亿(4只基金)","power":{"avr":"73.45","categories":["经验值","收益率","抗风险","稳定性","择时能力"],"dsc":["反映基金经理从业年限和管理基金的经验","根据基金经理投资的阶段收益评分，反映\u003cbr\u003e基金经理投资的盈利能力","反映基金经理投资的回撤控制能力","反映基金经理投资收益的波动","反映基金经理根据对市场的判断，通过\u003cbr\u003e调整仓位及配置而跑赢业绩的基准能力"],"data":[88.80,96.70,36.70,30.0,79.40],"jzrq":"2021-03-24"},"profit":{"categories":["任期收益","同类平均","沪深300"],"series":[{"data":[{"name":null,"color":"#7cb5ec","y":183.18},{"name":null,"color":"#414c7b","y":72.55},{"name":null,"color":"#f7a35c","y":51.88}]}],"jzrq":"2021-03-24"}}] ;
 '''
+
+@ray.remote
 class get_fund_dates():
-    def __init__(self):
+    def __init__(self, code ='005827', start='2018-09-05', end = None, ps = [0,2]):
         self.dates = []
-        self.processes = psutil.cpu_count(logical=False)
+        self.code = code
+        self.start = start
+        if end == None:
+           end = time.strftime("%Y-%m-%d",time.localtime())
+        self.end = end
+        self.ps = ps
 
     def get_url(self, url, params=None, proxies=None):
         rsp = requests.get(url, params=params, proxies=proxies)
         rsp.raise_for_status()
         return rsp.text
 
-    def get_fund_total(self, code,start='', end=''):
+    def get_fund_total(self):
         url = 'http://fund.eastmoney.com/f10/F10DataApi.aspx'
-        params = {'type': 'lsjz', 'code': code, 'page': 10, 'per': 49, 'sdate': start, 'edate': end}
+        params = {'type': 'lsjz', 'code': self.code, 'page': 10, 'per': 49, 'sdate': self.start, 'edate': self.end}
         html = self.get_url(url, params)
         temp =html.split(',')
         return temp[1].split(':')[1],temp[2].split(':')[1],temp[3].replace("};","").split(':')[1]
 
-    def _make_task_map(self, num_tasks):
-        extra_tasks = num_tasks%self.processes
-        tasks_even_portion = int(num_tasks/self.processes)
-        tasks_list = [tasks_even_portion for i in range(self.processes)]
-        for i in range(extra_tasks):
-            tasks_list[i] += 1
-        tasks_list = np.cumsum([0]+tasks_list)
-        task_map = {}
-        for i in range(self.processes):
-            task_map[i] = [tasks_list[i],tasks_list[i+1]]
-        self.task_map = task_map
-
-    def get_fund_data(self, code, start='', end='',p=0):
+    def get_fund_data(self, p=0):
         #record = {'Code': code}
         url = 'http://fund.eastmoney.com/f10/F10DataApi.aspx'
-        params = {'type': 'lsjz', 'code': code, 'page': p+1, 'per': 49, 'sdate': start, 'edate': end}
+        params = {'type': 'lsjz', 'code': self.code, 'page': p+1, 'per': 49, 'sdate': self.start, 'edate': self.end}
         html = self.get_url(url, params)
         soup = BeautifulSoup(html, 'html.parser')
         records = []
@@ -121,32 +116,60 @@ class get_fund_dates():
                 #records.append(record.copy())
         return records
 
-    @ray.remote
-    def get_fund_data_multi_pages(self, code, start='', end='',ps=[0,1]):
+    def get_fund_data_multi_pages(self):
         records = []
-        print(ps)
-        for p in list(range(ps[0],ps[1])):
-            records = records + self.get_fund_data(code, start='', end='',p=p)
+        for p in list(range(self.ps[0],self.ps[1])):
+            records = records + self.get_fund_data(p=p)
         return records
 
-    def get_info_ray(self,code = '005827', start = '2018-09-05', end = None):
-        if end == None:
-           end = time.strftime("%Y-%m-%d",time.localtime())
-        total, pages, currentpage = self.get_fund_total(code, start, end)
-        self._make_task_map(int(pages))
-        results = [ray.get(self.get_fund_data_multi_pages.remote(code, start, end, self.task_map[i])) for i in range(self.processes)]
-        results_flat = []
-        for each in results:
-            results_flat = results_flat + each
-        return results_flat
-
-    def get_info(self, code = '005827', start = '2018-09-05', end = None):
-        if end == None:
-           end = time.strftime("%Y-%m-%d",time.localtime())
-        total, pages, currentpage = self.get_fund_total(code, start, end)
+    def get_info(self):
+        t0 = time.time()
+        total, pages, currentpage = self.get_fund_total()
         dates = []
         for i in range(int(pages)):
-            records = self.get_fund_data(code, start, end,i)
+            records = self.get_fund_data(i)
             dates = dates + records
         self.dates = dates
+        print('Run Time (s): {}'.format(time.time()-t0))
         return dates
+
+def get_dates_ray(code = '005827', start = '2018-09-05', end = None):
+    t0 = time.time()
+    processes = psutil.cpu_count(logical=False)
+    def _make_task_map(num_tasks):
+        extra_tasks = num_tasks%processes
+        tasks_even_portion = int(num_tasks/processes)
+        tasks_list = [tasks_even_portion for i in range(processes)]
+        for i in range(extra_tasks):
+            tasks_list[i] += 1
+        tasks_list = np.cumsum([0]+tasks_list)
+        task_map = {}
+        for i in range(processes):
+            task_map[i] = [tasks_list[i],tasks_list[i+1]]
+        return task_map
+
+    def _get_url(url, params=None, proxies=None):
+        rsp = requests.get(url, params=params, proxies=proxies)
+        rsp.raise_for_status()
+        return rsp.text
+
+    def _get_fund_total(code,start='', end=''):
+        url = 'http://fund.eastmoney.com/f10/F10DataApi.aspx'
+        params = {'type': 'lsjz', 'code': code, 'page': 10, 'per': 49, 'sdate': start, 'edate': end}
+        html = _get_url(url, params)
+        temp =html.split(',')
+        return temp[1].split(':')[1],temp[2].split(':')[1],temp[3].replace("};","").split(':')[1]
+
+    if end == None:
+        end = time.strftime("%Y-%m-%d",time.localtime())
+    total, pages, currentpage = _get_fund_total(code, start, end)
+    task_map = _make_task_map(int(pages))
+    actors = [get_fund_dates.remote(code, start, end, task_map[i]) for i in range(processes)]
+    t1 = time.time()
+    results = [actor.get_fund_data_multi_pages.remote() for actor in actors]
+    t2=time.time()
+    results_flat = []
+    for each in ray.get(results):
+        results_flat = results_flat + each
+    print('Run Time (s): {},t1-t0:{},t2-t1:{}'.format(time.time()-t0,t1-t0,t2-t1))
+    return results_flat

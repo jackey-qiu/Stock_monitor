@@ -102,7 +102,7 @@ class MyMainWindow(QMainWindow):
         self.values_000300 = []
         self.values_000688 = []
         self.values_specified = []
-        self.extract_selected_index()
+        # self.extract_selected_index()
         self.setup_plot()
         self.data_extractor = data_extractor
 
@@ -122,13 +122,14 @@ class MyMainWindow(QMainWindow):
         self.lineEdit_fund_total.setText(str(js.eval('Data_fluctuationScale')['series'][-1]['y']))
         net_ = js.eval('Data_netWorthTrend')
         net_values = [each['y'] for each in net_]
+        dates = [(pd.to_datetime(each['x'], unit="ms", utc=True).tz_convert('Asia/Shanghai').date()-datetime.date(1, 1, 1)).days for each in net_]
         #self.setup_plot_fund()
 
         self.mpl_widget_jijing.clear()
         self.ax_fund = self.mpl_widget_jijing.addPlot(clear = True)
         self.ax_fund_zoomin = self.mpl_widget_jijing.addPlot(clear = True)
-        self.ax_fund.plot(net_values, clear = True)
-        self.ax_fund_zoomin.plot(net_values, clear = True)
+        self.ax_fund.plot(dates,net_values, clear = True)
+        self.ax_fund_zoomin.plot(dates,net_values, clear = True)
         self.lr_fund = pg.LinearRegionItem()
         self.lr_fund.setZValue(-10)
         self.lr_fund.sigRegionChanged.connect(self._updatePlot_fund)
@@ -141,6 +142,10 @@ class MyMainWindow(QMainWindow):
         #self.label = pg.LabelItem(justify='right')
         # self.ax_dapan_zoomin.addItem(self.label)
         self.proxy_fund = pg.SignalProxy(self.ax_fund_zoomin.scene().sigMouseMoved, rateLimit=60, slot=self.mouseMoved_fund)
+        ticks = [(each, (datetime.date(1, 1, 1)+datetime.timedelta(each)).strftime('%y-%m-%d')) for each in dates]
+        self.ax_fund.getAxis('bottom').setTicks([ticks])
+        self.ax_fund_zoomin.getAxis('bottom').setTicks([ticks])
+
 
     def setup_plot(self):
         self.lr = pg.LinearRegionItem()
