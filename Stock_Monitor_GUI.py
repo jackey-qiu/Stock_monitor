@@ -6,7 +6,7 @@ from PyQt5 import uic
 import random
 import numpy as np
 import matplotlib.pyplot as plt
-import finplot as fplt
+# import finplot as fplt
 try:
     from . import locate_path
     from . import data_extractor
@@ -243,9 +243,9 @@ class MyMainWindow(QMainWindow):
 
 
 if __name__ == "__main__":
-    QApplication.setStyle("fusion")
+    QApplication.setStyle("windows")
     app = QApplication(sys.argv)
     myWin = MyMainWindow()
-    # app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     myWin.show()
     sys.exit(app.exec_())

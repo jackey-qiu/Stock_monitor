@@ -8,6 +8,10 @@ from io import StringIO
 import requests
 import execjs
 from bs4 import BeautifulSoup
+import ray
+import psutil
+
+ray.init(num_cpus = psutil.cpu_count(logical=False))
 
 index_code_map = {'上证指数':'000001','上证50':'000016','沪深300':'000300','科创50':'000688'}
 url_template = 'http://push2his.eastmoney.com/api/qt/stock/kline/get?cb=jQuery1124034703156772714716_1606741623783&secid=1.{}&ut=fa5fd1943c7b386f172d6893dbfba10b&fields1=f1%2Cf2%2Cf3%2Cf4%2Cf5&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56%2Cf57%2Cf58&klt=101&fqt=0&beg=19900101&end=20220101&_=1606741623987'
@@ -75,6 +79,7 @@ var fS_code = "005827";
 class get_fund_dates():
     def __init__(self):
         self.dates = []
+        self.processes = psutil.cpu_count(logical=False)
 
     def get_url(self, url, params=None, proxies=None):
         rsp = requests.get(url, params=params, proxies=proxies)
@@ -82,12 +87,23 @@ class get_fund_dates():
         return rsp.text
 
     def get_fund_total(self, code,start='', end=''):
-        record = {'Code': code}
         url = 'http://fund.eastmoney.com/f10/F10DataApi.aspx'
         params = {'type': 'lsjz', 'code': code, 'page': 10, 'per': 49, 'sdate': start, 'edate': end}
         html = self.get_url(url, params)
         temp =html.split(',')
         return temp[1].split(':')[1],temp[2].split(':')[1],temp[3].replace("};","").split(':')[1]
+
+    def _make_task_map(self, num_tasks):
+        extra_tasks = num_tasks%self.processes
+        tasks_even_portion = int(num_tasks/self.processes)
+        tasks_list = [tasks_even_portion for i in range(self.processes)]
+        for i in range(extra_tasks):
+            tasks_list[i] += 1
+        tasks_list = np.cumsum([0]+tasks_list)
+        task_map = {}
+        for i in range(self.processes):
+            task_map[i] = [tasks_list[i],tasks_list[i+1]]
+        self.task_map = task_map
 
     def get_fund_data(self, code, start='', end='',p=0):
         #record = {'Code': code}
@@ -104,6 +120,25 @@ class get_fund_dates():
                 #record['ChangePercent'] = str(tr.select('td:nth-of-type(4)')[0].getText().strip())
                 #records.append(record.copy())
         return records
+
+    @ray.remote
+    def get_fund_data_multi_pages(self, code, start='', end='',ps=[0,1]):
+        records = []
+        print(ps)
+        for p in list(range(ps[0],ps[1])):
+            records = records + self.get_fund_data(code, start='', end='',p=p)
+        return records
+
+    def get_info_ray(self,code = '005827', start = '2018-09-05', end = None):
+        if end == None:
+           end = time.strftime("%Y-%m-%d",time.localtime())
+        total, pages, currentpage = self.get_fund_total(code, start, end)
+        self._make_task_map(int(pages))
+        results = [ray.get(self.get_fund_data_multi_pages.remote(code, start, end, self.task_map[i])) for i in range(self.processes)]
+        results_flat = []
+        for each in results:
+            results_flat = results_flat + each
+        return results_flat
 
     def get_info(self, code = '005827', start = '2018-09-05', end = None):
         if end == None:
