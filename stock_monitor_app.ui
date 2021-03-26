@@ -745,7 +745,7 @@
                <attribute name="title">
                 <string>基本信息</string>
                </attribute>
-               <layout class="QVBoxLayout" name="verticalLayout_4">
+               <layout class="QVBoxLayout" name="verticalLayout_7">
                 <item>
                  <layout class="QHBoxLayout" name="horizontalLayout_3">
                   <item>
@@ -847,7 +847,7 @@
                  </layout>
                 </item>
                 <item>
-                 <widget class="QGroupBox" name="">
+                 <widget class="QGroupBox" name="groupBox">
                   <layout class="QGridLayout" name="gridLayout">
                    <item row="1" column="9">
                     <widget class="QLabel" name="label_36">
@@ -1320,6 +1320,236 @@
                  </widget>
                 </item>
                 <item>
+                 <widget class="QLabel" name="label_27">
+                  <property name="text">
+                   <string>基金经理</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_7">
+                  <item>
+                   <layout class="QVBoxLayout" name="verticalLayout_4">
+                    <item>
+                     <widget class="QLabel" name="label_manager">
+                      <property name="minimumSize">
+                       <size>
+                        <width>60</width>
+                        <height>60</height>
+                       </size>
+                      </property>
+                      <property name="maximumSize">
+                       <size>
+                        <width>50000</width>
+                        <height>16777215</height>
+                       </size>
+                      </property>
+                      <property name="text">
+                       <string>manager</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </item>
+                  <item>
+                   <widget class="QGroupBox" name="">
+                    <layout class="QGridLayout" name="gridLayout_2">
+                     <item row="0" column="6">
+                      <widget class="QLineEdit" name="lineEdit_fund_manager_experience">
+                       <property name="maximumSize">
+                        <size>
+                         <width>100</width>
+                         <height>16777215</height>
+                        </size>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="0" column="5">
+                      <widget class="QLabel" name="label_45">
+                       <property name="text">
+                        <string>经验值</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="1" column="5">
+                      <widget class="QLabel" name="label_46">
+                       <property name="text">
+                        <string>抗风险</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="1" column="8">
+                      <widget class="QLineEdit" name="lineEdit_fund_manager_stability">
+                       <property name="maximumSize">
+                        <size>
+                         <width>100</width>
+                         <height>16777215</height>
+                        </size>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="1" column="6">
+                      <widget class="QLineEdit" name="lineEdit_fund_manager_risk_resistance">
+                       <property name="maximumSize">
+                        <size>
+                         <width>100</width>
+                         <height>16777215</height>
+                        </size>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="0" column="7">
+                      <widget class="QLabel" name="label_47">
+                       <property name="text">
+                        <string>收益率</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="1" column="7">
+                      <widget class="QLabel" name="label_48">
+                       <property name="text">
+                        <string>稳定性</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="0" column="9">
+                      <widget class="QLabel" name="label_49">
+                       <property name="text">
+                        <string>择时能力</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="0" column="8">
+                      <widget class="QLineEdit" name="lineEdit_fund_manager_profit">
+                       <property name="maximumSize">
+                        <size>
+                         <width>100</width>
+                         <height>16777215</height>
+                        </size>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="1" column="9">
+                      <widget class="QLabel" name="label_50">
+                       <property name="text">
+                        <string>综合评分</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="0" column="0">
+                      <widget class="QLabel" name="label_40">
+                       <property name="text">
+                        <string>姓名</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="0" column="1">
+                      <widget class="QLineEdit" name="lineEdit_fund_manager_name">
+                       <property name="maximumSize">
+                        <size>
+                         <width>100</width>
+                         <height>16777215</height>
+                        </size>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="0" column="2">
+                      <widget class="QLabel" name="label_41">
+                       <property name="text">
+                        <string>星级</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="0" column="4">
+                      <widget class="QLabel" name="label_44">
+                       <property name="text">
+                        <string>能力评估</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="1" column="0">
+                      <widget class="QLabel" name="label_42">
+                       <property name="text">
+                        <string>工作年限</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="1" column="2">
+                      <widget class="QLabel" name="label_43">
+                       <property name="text">
+                        <string>管理基金规模</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="1" column="1">
+                      <widget class="QLineEdit" name="lineEdit_fund_manager_work_years">
+                       <property name="maximumSize">
+                        <size>
+                         <width>100</width>
+                         <height>16777215</height>
+                        </size>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="1" column="3">
+                      <widget class="QLineEdit" name="lineEdit_fund_manager_fund_size">
+                       <property name="maximumSize">
+                        <size>
+                         <width>100</width>
+                         <height>16777215</height>
+                        </size>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="0" column="3">
+                      <widget class="QLineEdit" name="lineEdit_fund_manager_stars">
+                       <property name="maximumSize">
+                        <size>
+                         <width>100</width>
+                         <height>16777215</height>
+                        </size>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="1" column="10">
+                      <widget class="QLineEdit" name="lineEdit_fund_manager_average">
+                       <property name="maximumSize">
+                        <size>
+                         <width>100</width>
+                         <height>16777215</height>
+                        </size>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="0" column="10">
+                      <widget class="QLineEdit" name="lineEdit_fund_manager_timing">
+                       <property name="maximumSize">
+                        <size>
+                         <width>100</width>
+                         <height>16777215</height>
+                        </size>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="0" column="11">
+                      <spacer name="horizontalSpacer_5">
+                       <property name="orientation">
+                        <enum>Qt::Horizontal</enum>
+                       </property>
+                       <property name="sizeHint" stdset="0">
+                        <size>
+                         <width>40</width>
+                         <height>20</height>
+                        </size>
+                       </property>
+                      </spacer>
+                     </item>
+                    </layout>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+                <item>
                  <spacer name="verticalSpacer">
                   <property name="orientation">
                    <enum>Qt::Vertical</enum>
@@ -1327,7 +1557,7 @@
                   <property name="sizeHint" stdset="0">
                    <size>
                     <width>20</width>
-                    <height>40</height>
+                    <height>74</height>
                    </size>
                   </property>
                  </spacer>
