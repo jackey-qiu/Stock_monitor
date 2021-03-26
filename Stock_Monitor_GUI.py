@@ -119,7 +119,16 @@ class MyMainWindow(QMainWindow):
         self.lineEdit_fund_accumulate_wealth.setText(str(js.eval('Data_ACWorthTrend')[-1][1]))
         change = (js.eval('Data_netWorthTrend')[-1]['y'] - js.eval('Data_netWorthTrend')[-2]['y'])/js.eval('Data_netWorthTrend')[-2]['y']*100
         self.lineEdit_fund_change.setText('{}%'.format(round(change,2)))
-        self.lineEdit_fund_total.setText(str(js.eval('Data_fluctuationScale')['series'][-1]['y']))
+        self.lineEdit_fund_total.setText(str(js.eval('Data_fluctuationScale')['series'][-1]['y'])+'亿')
+        self.lineEdit_profit_one_month.setText(str(js.eval('syl_1y'))+'%')
+        self.lineEdit_profit_three_month.setText(str(js.eval('syl_3y'))+'%')
+        self.lineEdit_profit_half_year.setText(str(js.eval('syl_6y'))+'%')
+        self.lineEdit_profit_one_year.setText(str(js.eval('syl_1n'))+'%')
+        self.lineEdit_avg.setText(str(js.eval('Data_performanceEvaluation')['avr']))
+        data_ = js.eval('Data_performanceEvaluation')['data']
+        lineEdits = [getattr(self, each) for each in ['lineEdit_select_stock','lineEdit_profit','lineEdit_risk_resistance','lineEdit_stability','lineEdit_timing']]
+        for i, each in enumerate(lineEdits):
+            each.setText(str(data_[i]))
         net_ = js.eval('Data_netWorthTrend')
         net_values = [each['y'] for each in net_]
         dates = [(pd.to_datetime(each['x'], unit="ms", utc=True).tz_convert('Asia/Shanghai').date()-datetime.date(1, 1, 1)).days for each in net_]
@@ -235,6 +244,7 @@ class MyMainWindow(QMainWindow):
         self.setup_plot()
         if getattr(self,'values_{}'.format(code)).__len__() == 0:                
             setattr(self,'values_{}'.format(code),data_extractor.extract_all_records(code))
+            self.set_current_price(code)
         values = data_extractor.extract_index_data(code, start, end, getattr(self,'values_{}'.format(code)))
         self.values_specified = values
         item = CandlestickItem(values)
@@ -251,6 +261,6 @@ if __name__ == "__main__":
     QApplication.setStyle("windows")
     app = QApplication(sys.argv)
     myWin = MyMainWindow()
-    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+    # app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     myWin.show()
     sys.exit(app.exec_())

@@ -79,31 +79,38 @@ var fS_code = "005827";
 
 @ray.remote
 class get_fund_dates():
-    def __init__(self, code ='005827', start='2018-09-05', end = None, ps = [0,2]):
+    def __init__(self):
         self.dates = []
-        self.code = code
-        self.start = start
-        if end == None:
-           end = time.strftime("%Y-%m-%d",time.localtime())
-        self.end = end
-        self.ps = ps
+        self.processes = psutil.cpu_count(logical=False)
 
     def get_url(self, url, params=None, proxies=None):
         rsp = requests.get(url, params=params, proxies=proxies)
         rsp.raise_for_status()
         return rsp.text
 
-    def get_fund_total(self):
+    def get_fund_total(self, code,start='', end=''):
         url = 'http://fund.eastmoney.com/f10/F10DataApi.aspx'
-        params = {'type': 'lsjz', 'code': self.code, 'page': 10, 'per': 49, 'sdate': self.start, 'edate': self.end}
+        params = {'type': 'lsjz', 'code': code, 'page': 10, 'per': 49, 'sdate': start, 'edate': end}
         html = self.get_url(url, params)
         temp =html.split(',')
         return temp[1].split(':')[1],temp[2].split(':')[1],temp[3].replace("};","").split(':')[1]
 
-    def get_fund_data(self, p=0):
+    def _make_task_map(self, num_tasks):
+        extra_tasks = num_tasks%self.processes
+        tasks_even_portion = int(num_tasks/self.processes)
+        tasks_list = [tasks_even_portion for i in range(self.processes)]
+        for i in range(extra_tasks):
+            tasks_list[i] += 1
+        tasks_list = np.cumsum([0]+tasks_list)
+        task_map = {}
+        for i in range(self.processes):
+            task_map[i] = [tasks_list[i],tasks_list[i+1]]
+        self.task_map = task_map
+
+    def get_fund_data(self, code, start='', end='',p=0):
         #record = {'Code': code}
         url = 'http://fund.eastmoney.com/f10/F10DataApi.aspx'
-        params = {'type': 'lsjz', 'code': self.code, 'page': p+1, 'per': 49, 'sdate': self.start, 'edate': self.end}
+        params = {'type': 'lsjz', 'code': code, 'page': p+1, 'per': 49, 'sdate': start, 'edate': end}
         html = self.get_url(url, params)
         soup = BeautifulSoup(html, 'html.parser')
         records = []
@@ -116,60 +123,31 @@ class get_fund_dates():
                 #records.append(record.copy())
         return records
 
-    def get_fund_data_multi_pages(self):
+    def get_fund_data_multi_pages(self, code, start='', end='',ps=[0,1]):
         records = []
-        for p in list(range(self.ps[0],self.ps[1])):
-            records = records + self.get_fund_data(p=p)
+        for p in list(range(ps[0],ps[1])):
+            records = records + self.get_fund_data(code, start='', end='',p=p)
         return records
 
-    def get_info(self):
-        t0 = time.time()
-        total, pages, currentpage = self.get_fund_total()
+    def get_info(self, code = '005827', start = '2018-09-05', end = None):
+        if end == None:
+           end = time.strftime("%Y-%m-%d",time.localtime())
+        total, pages, currentpage = self.get_fund_total(code, start, end)
         dates = []
         for i in range(int(pages)):
-            records = self.get_fund_data(i)
+            records = self.get_fund_data(code, start, end,i)
             dates = dates + records
         self.dates = dates
-        print('Run Time (s): {}'.format(time.time()-t0))
         return dates
 
-def get_dates_ray(code = '005827', start = '2018-09-05', end = None):
-    t0 = time.time()
-    processes = psutil.cpu_count(logical=False)
-    def _make_task_map(num_tasks):
-        extra_tasks = num_tasks%processes
-        tasks_even_portion = int(num_tasks/processes)
-        tasks_list = [tasks_even_portion for i in range(processes)]
-        for i in range(extra_tasks):
-            tasks_list[i] += 1
-        tasks_list = np.cumsum([0]+tasks_list)
-        task_map = {}
-        for i in range(processes):
-            task_map[i] = [tasks_list[i],tasks_list[i+1]]
-        return task_map
-
-    def _get_url(url, params=None, proxies=None):
-        rsp = requests.get(url, params=params, proxies=proxies)
-        rsp.raise_for_status()
-        return rsp.text
-
-    def _get_fund_total(code,start='', end=''):
-        url = 'http://fund.eastmoney.com/f10/F10DataApi.aspx'
-        params = {'type': 'lsjz', 'code': code, 'page': 10, 'per': 49, 'sdate': start, 'edate': end}
-        html = _get_url(url, params)
-        temp =html.split(',')
-        return temp[1].split(':')[1],temp[2].split(':')[1],temp[3].replace("};","").split(':')[1]
-
+def get_dates_ray(self,code = '005827', start = '2018-09-05', end = None):
     if end == None:
         end = time.strftime("%Y-%m-%d",time.localtime())
-    total, pages, currentpage = _get_fund_total(code, start, end)
-    task_map = _make_task_map(int(pages))
-    actors = [get_fund_dates.remote(code, start, end, task_map[i]) for i in range(processes)]
-    t1 = time.time()
-    results = [actor.get_fund_data_multi_pages.remote() for actor in actors]
-    t2=time.time()
+    
+    total, pages, currentpage = self.get_fund_total(code, start, end)
+    self._make_task_map(int(pages))
+    results = [ray.get(self.get_fund_data_multi_pages.remote(code, start, end, self.task_map[i])) for i in range(self.processes)]
     results_flat = []
-    for each in ray.get(results):
+    for each in results:
         results_flat = results_flat + each
-    print('Run Time (s): {},t1-t0:{},t2-t1:{}'.format(time.time()-t0,t1-t0,t2-t1))
     return results_flat
