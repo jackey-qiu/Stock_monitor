@@ -1,5 +1,8 @@
 import sys,os,qdarkstyle
+import urllib
+import cv2
 from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox
+from PyQt5.QtGui import QPixmap, QImage
 from matplotlib.backends.backend_qt5agg import FigureCanvas
 from matplotlib.figure import Figure
 from PyQt5 import uic
@@ -59,7 +62,7 @@ class CandlestickItem(pg.GraphicsObject):
         self.picture = QtGui.QPicture()
         p = QtGui.QPainter(self.picture)
         p.setPen(pg.mkPen('w'))
-        w = (self.data.iloc[1,0] - self.data.iloc[0,0]) / 3.
+        w = (self.data.iloc[1,0] - self.data.iloc[0,0]) / 4.
         for i in range(len(self.data)):
             (t, open, close, min, max,*_) = self.data.iloc[i]
             p.drawLine(QtCore.QPointF(t, min), QtCore.QPointF(t, max))
@@ -97,6 +100,8 @@ class MyMainWindow(QMainWindow):
         self.pushButton_last_six_month.clicked.connect(lambda:self.plot_dapan_profile(code = data_extractor.index_code_map[self.comboBox_index_type.currentText()], start = (datetime.datetime.today()-datetime.timedelta(183)).strftime('%Y-%m-%d'), end = datetime.datetime.today().strftime('%Y-%m-%d')))
         self.pushButton_last_year.clicked.connect(lambda:self.plot_dapan_profile(code = data_extractor.index_code_map[self.comboBox_index_type.currentText()], start = (datetime.datetime.today()-datetime.timedelta(365)).strftime('%Y-%m-%d'), end = datetime.datetime.today().strftime('%Y-%m-%d')))
         self.pushButton_extract_3.clicked.connect(self.extract_fund_info)
+        self.pushButton_extract_4.clicked.connect(self.plot_poforlio_fund)
+        self.pushButton_sort_fund.clicked.connect(self.sort_fund_rank)
         self.values_000001 = []
         self.values_000016 = []
         self.values_000300 = []
@@ -129,17 +134,37 @@ class MyMainWindow(QMainWindow):
         lineEdits = [getattr(self, each) for each in ['lineEdit_select_stock','lineEdit_profit','lineEdit_risk_resistance','lineEdit_stability','lineEdit_timing']]
         for i, each in enumerate(lineEdits):
             each.setText(str(data_[i]))
+        #fund manager information
+        manager_info = js.eval('Data_currentFundManager')[0]
+        self.lineEdit_fund_manager_name.setText(manager_info['name'])
+        self.lineEdit_fund_manager_star.setText(str(manager_info['star']))
+        self.lineEdit_fund_manager_work_years.setText(manager_info['workTime'])
+        self.lineEdit_fund_manager_fund_size.setText(manager_info['fundSize'])
+        lineEdits_manager = [getattr(self, 'lineEdit_fund_manager_'+each) for each in ['experience','profit','risk_resistance','stability','timing']]
+        data_manager = manager_info['power']['data']
+        for i, each in enumerate(lineEdits_manager):
+            each.setText(str(data_manager[i]))
+        self.lineEdit_fund_manager_average.setText(manager_info['power']['avr'])
+        #download photo
+        f = open(os.path.join(script_path,'temp','manager_photo.jpg'),'wb')           
+        f.write(urllib.request.urlopen(manager_info['pic']).read())
+        f.close()
+        # create QImage from image
+        # show image in img_label
+        self.label_manager.setPixmap(QPixmap(os.path.join(script_path,'temp','manager_photo.jpg')))
+        self.label_manager.setScaledContents(True)
+
         net_ = js.eval('Data_netWorthTrend')
         net_values = [each['y'] for each in net_]
         dates = [(pd.to_datetime(each['x'], unit="ms", utc=True).tz_convert('Asia/Shanghai').date()-datetime.date(1, 1, 1)).days for each in net_]
-        #self.setup_plot_fund()
-
+        self.dates_fund = dates
+        self.net_values_fund = net_values
         self.mpl_widget_jijing.clear()
         self.ax_fund = self.mpl_widget_jijing.addPlot(clear = True)
         self.ax_fund_zoomin = self.mpl_widget_jijing.addPlot(clear = True)
-        self.ax_fund.plot(dates,net_values, clear = True)
-        self.ax_fund_zoomin.plot(dates,net_values, clear = True)
-        self.lr_fund = pg.LinearRegionItem()
+        self.ax_fund.plot(dates,net_values, clear = True,pen=pg.mkPen('g', width=3))
+        self.ax_fund_zoomin.plot(dates,net_values, clear = True,pen=pg.mkPen('r', width=3))
+        self.lr_fund = pg.LinearRegionItem(bounds=[min(dates),max(dates)])
         self.lr_fund.setZValue(-10)
         self.lr_fund.sigRegionChanged.connect(self._updatePlot_fund)
         self.ax_fund_zoomin.sigXRangeChanged.connect(self._updateRegion_fund)
@@ -150,13 +175,44 @@ class MyMainWindow(QMainWindow):
         self.ax_fund_zoomin.addItem(self.hLine_fund, ignoreBounds=True)
         #self.label = pg.LabelItem(justify='right')
         # self.ax_dapan_zoomin.addItem(self.label)
+        # self.lr_fund.setBounds()
         self.proxy_fund = pg.SignalProxy(self.ax_fund_zoomin.scene().sigMouseMoved, rateLimit=60, slot=self.mouseMoved_fund)
-        ticks = [(each, (datetime.date(1, 1, 1)+datetime.timedelta(each)).strftime('%y-%m-%d')) for each in dates]
-        self.ax_fund.getAxis('bottom').setTicks([ticks])
-        self.ax_fund_zoomin.getAxis('bottom').setTicks([ticks])
+        self.set_tick_strings_fund(dates)
+        self.ax_fund.sigXRangeChanged.connect(lambda:self.set_tick_strings_fund(self.dates_fund))
+        self.ax_fund_zoomin.sigXRangeChanged.connect(lambda:self.set_tick_strings_fund(self.dates_fund))
 
+    def plot_poforlio_fund(self):
+        self.widget_portfolio_bar.clear()
+        year = self.lineEdit_year.text()
+        code = self.lineEdit_fund_code.text()
+        quarter = self.comboBox_quarter.currentText()
+        results_df = data_extractor.extract_porfolio_info(code, year, quarter)
+        stock_names = list(results_df['股票名称'])
+        percents = list(results_df['占净值比例'].apply(float))
+        self.lineEdit_sum.setText('{}%'.format(round(sum(percents[0:10]),2)))
+        self.textBrowser_portfolio_list.setPlainText(results_df.to_string(col_space = 20,index=False).replace('\n','\n\n'))
+        bg1 = pg.BarGraphItem(x=list(range(1,len(percents)+1)), height=percents, width=0.3, brush='g')
+        self.ax_bar_fund = self.widget_portfolio_bar.addPlot(clear = True)
+        self.ax_bar_fund.addItem(bg1)
+        self.ax_bar_fund.getAxis('bottom').setTicks([list(zip(list(range(1,len(percents)+1)),[str(each) for each in range(1,len(percents)+1)]))])
+        self.ax_bar_fund.getAxis('bottom').setLabel('序号')
+        self.ax_bar_fund.getAxis('left').setLabel('占净值百分比(%)')
+
+    def sort_fund_rank(self):
+        fund_type, num_items = self.comboBox_fund_type.currentText(),int(self.spinBox_item_number.value())
+        sort_by = []
+        sort_method = []
+        for i in range(1,4):
+            text = getattr(self,'comboBox_sort_key{}'.format(i)).currentText()
+            if text != '无':
+                sort_by.append(text)
+                sort_method.append(getattr(self,'comboBox_sort_method{}'.format(i)).currentText()=='升序')
+        results = data_extractor.extract_fund_rank(fund_type,sort_by,sort_method,num_items)
+        results = results.reset_index()
+        self.textBrowser_fund_sorted_results.setPlainText(results.to_string(col_space = 10).replace('\n','\n\n'))
 
     def setup_plot(self):
+        self.mplwidget_dapan.clear()
         self.lr = pg.LinearRegionItem()
         self.lr.setZValue(-10)
         self.ax_dapan = self.mplwidget_dapan.addPlot(clear = True)
@@ -171,6 +227,8 @@ class MyMainWindow(QMainWindow):
         self.label = pg.LabelItem(justify='right')
         # self.ax_dapan_zoomin.addItem(self.label)
         self.proxy = pg.SignalProxy(self.ax_dapan_zoomin.scene().sigMouseMoved, rateLimit=60, slot=self.mouseMoved)
+        self.ax_dapan.sigXRangeChanged.connect(self.set_tick_strings_dapan)
+        self.ax_dapan_zoomin.sigXRangeChanged.connect(self.set_tick_strings_dapan)
 
     def setup_plot_fund(self):
         #fund
@@ -224,14 +282,34 @@ class MyMainWindow(QMainWindow):
         pos = evt[0]  ## using signal proxy turns original arguments into a tuple
         if self.ax_fund_zoomin.sceneBoundingRect().contains(pos):
             mousePoint = self.ax_fund_zoomin.vb.mapSceneToView(pos)
+            index = int(mousePoint.x())
+            which = np.argmin(abs(np.array(self.dates_fund)-index))
+            results = [self.dates_fund[which],self.net_values_fund[which]]
+            change = 0
+            if which!=0:
+                change = (self.net_values_fund[which] - self.net_values_fund[which-1])/self.net_values_fund[which-1]*100
+            self.lineEdit_single_point_fund.setText('开盘日期:{};    基金净值:{};    涨跌幅:{:4.2f}%;'.format((datetime.date(1, 1, 1)+datetime.timedelta(int(self.dates_fund[which]))).strftime('%Y-%m-%d'),self.net_values_fund[which],change))
             self.vLine_fund.setPos(mousePoint.x())
             self.hLine_fund.setPos(mousePoint.y())
 
     def _updatePlot(self):
         self.ax_dapan_zoomin.setXRange(*self.lr.getRegion(), padding=0)
+        bound_left, bound_right = self.lr.getRegion()
+        index_left = np.argmin(abs(np.array(self.values_specified['date'])-bound_left))
+        index_right = np.argmin(abs(np.array(self.values_specified['date'])-bound_right))
+        min_y = min(self.values_specified['low_price'][index_left:index_right])
+        max_y = max(self.values_specified['high_price'][index_left:index_right])
+        self.ax_dapan_zoomin.setYRange(min_y,max_y, padding=0)
+
 
     def _updatePlot_fund(self):
         self.ax_fund_zoomin.setXRange(*self.lr_fund.getRegion(), padding=0)
+        bound_left, bound_right = self.lr_fund.getRegion()
+        index_left = np.argmin(abs(np.array(self.dates_fund)-bound_left))
+        index_right = np.argmin(abs(np.array(self.dates_fund)-bound_right))
+        min_y = min(self.net_values_fund[index_left:index_right])
+        max_y = max(self.net_values_fund[index_left:index_right])
+        self.ax_fund_zoomin.setYRange(min_y,max_y, padding=0)
 
     def _updateRegion(self):
         self.lr.setRegion(self.ax_dapan_zoomin.getViewBox().viewRange()[0])
@@ -240,7 +318,6 @@ class MyMainWindow(QMainWindow):
         self.lr_fund.setRegion(self.ax_fund_zoomin.getViewBox().viewRange()[0])
 
     def plot_dapan_profile(self, code = '000001', start = '2019-01-01', end = '2021-03-22'):
-        self.mplwidget_dapan.clear()
         self.setup_plot()
         if getattr(self,'values_{}'.format(code)).__len__() == 0:                
             setattr(self,'values_{}'.format(code),data_extractor.extract_all_records(code))
@@ -251,11 +328,50 @@ class MyMainWindow(QMainWindow):
         item2 = CandlestickItem(values)
         self.ax_dapan.addItem(item)
         self.ax_dapan_zoomin.addItem(item2)
-        ticks = [(each, (datetime.date(1, 1, 1)+datetime.timedelta(each)).strftime('%y-%m-%d')) for each in values['date']]
-        self.ax_dapan.getAxis('bottom').setTicks([ticks])
-        self.ax_dapan_zoomin.getAxis('bottom').setTicks([ticks])
-        # self._updatePlot()
+        self.set_tick_strings_dapan()
 
+    def set_tick_strings_dapan(self):
+        def _find_nearest_neighbor(values_pool, values):
+            values_return = []
+            values_pool = np.array(values_pool)
+            for each in values:
+                values_return.append(int(values_pool[np.argmin(abs(values_pool - each))]))
+            return list(set(values_return))
+
+        ticks_num = 6
+        range_dapan = self.ax_dapan.getAxis('bottom').range
+        range_dapan_zoomin = self.ax_dapan_zoomin.getAxis('bottom').range
+        dates_raw_dapan = [range_dapan[0] + (range_dapan[1] - range_dapan[0])/ticks_num*i for i in range(ticks_num)]
+        dates_raw_dapan_zoomin = [range_dapan_zoomin[0] + (range_dapan_zoomin[1] - range_dapan_zoomin[0])/ticks_num*i for i in range(ticks_num)]
+        dates_final_dapan = _find_nearest_neighbor(self.values_specified['date'],dates_raw_dapan)
+        dates_final_dapan_zoomin = _find_nearest_neighbor(self.values_specified['date'],dates_raw_dapan_zoomin)
+        # print(dates_raw_dapan)
+        # print(dates_final_dapan)
+        
+        ticks_dapan = [(each, (datetime.date(1, 1, 1)+datetime.timedelta(each)).strftime('%y-%m-%d')) for each in dates_final_dapan]
+        ticks_dapan_zoomin = [(each, (datetime.date(1, 1, 1)+datetime.timedelta(each)).strftime('%y-%m-%d')) for each in dates_final_dapan_zoomin]
+        self.ax_dapan.getAxis('bottom').setTicks([ticks_dapan])
+        self.ax_dapan_zoomin.getAxis('bottom').setTicks([ticks_dapan_zoomin])
+
+    def set_tick_strings_fund(self, dates):
+        def _find_nearest_neighbor(values_pool, values):
+            values_return = []
+            values_pool = np.array(values_pool)
+            for each in values:
+                values_return.append(int(values_pool[np.argmin(abs(values_pool - each))]))
+            return list(set(values_return))
+
+        ticks_num = 6
+        range_fund = self.ax_fund.getAxis('bottom').range
+        range_fund_zoomin = self.ax_fund_zoomin.getAxis('bottom').range
+        dates_raw_fund = [range_fund[0] + (range_fund[1] - range_fund[0])/ticks_num*i for i in range(ticks_num)]
+        dates_raw_fund_zoomin = [range_fund_zoomin[0] + (range_fund_zoomin[1] - range_fund_zoomin[0])/ticks_num*i for i in range(ticks_num)]
+        dates_final_fund = _find_nearest_neighbor(dates,dates_raw_fund)
+        dates_final_fund_zoomin = _find_nearest_neighbor(dates,dates_raw_fund_zoomin)
+        ticks_fund = [(each, (datetime.date(1, 1, 1)+datetime.timedelta(each)).strftime('%y-%m-%d')) for each in dates_final_fund]
+        ticks_fund_zoomin = [(each, (datetime.date(1, 1, 1)+datetime.timedelta(each)).strftime('%y-%m-%d')) for each in dates_final_fund_zoomin]
+        self.ax_fund.getAxis('bottom').setTicks([ticks_fund])
+        self.ax_fund_zoomin.getAxis('bottom').setTicks([ticks_fund_zoomin])
 
 if __name__ == "__main__":
     QApplication.setStyle("windows")
