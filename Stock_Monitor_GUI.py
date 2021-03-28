@@ -62,7 +62,8 @@ class CandlestickItem(pg.GraphicsObject):
         self.picture = QtGui.QPicture()
         p = QtGui.QPainter(self.picture)
         p.setPen(pg.mkPen('w'))
-        w = (self.data.iloc[1,0] - self.data.iloc[0,0]) / 4.
+        #w = (self.data.iloc[1,0] - self.data.iloc[0,0]) / 4.
+        w = 1/4.
         for i in range(len(self.data)):
             (t, open, close, min, max,*_) = self.data.iloc[i]
             p.drawLine(QtCore.QPointF(t, min), QtCore.QPointF(t, max))
@@ -153,7 +154,7 @@ class MyMainWindow(QMainWindow):
         # show image in img_label
         self.label_manager.setPixmap(QPixmap(os.path.join(script_path,'temp','manager_photo.jpg')))
         self.label_manager.setScaledContents(True)
-
+        #extract net fund wealth
         net_ = js.eval('Data_netWorthTrend')
         net_values = [each['y'] for each in net_]
         dates = [(pd.to_datetime(each['x'], unit="ms", utc=True).tz_convert('Asia/Shanghai').date()-datetime.date(1, 1, 1)).days for each in net_]
@@ -180,6 +181,42 @@ class MyMainWindow(QMainWindow):
         self.set_tick_strings_fund(dates)
         self.ax_fund.sigXRangeChanged.connect(lambda:self.set_tick_strings_fund(self.dates_fund))
         self.ax_fund_zoomin.sigXRangeChanged.connect(lambda:self.set_tick_strings_fund(self.dates_fund))
+        #extract rank among funds of similar type
+        rank = js.eval('Data_rateInSimilarPersent')
+        self.percent_rank_fund = [each[1] for each in rank]
+        self.dates_rank_fund = [(pd.to_datetime(each[0], unit="ms", utc=True).tz_convert('Asia/Shanghai').date()-datetime.date(1, 1, 1)).days for each in rank]
+        self.widget_rank.clear()
+        self.ax_rank_fund = self.widget_rank.addPlot(clear = True)
+        self.ax_rank_fund.getAxis('left').setLabel('排名百分比(%)')
+        self.ax_rank_fund.plot(self.dates_rank_fund,self.percent_rank_fund, clear = True, pen=pg.mkPen('w', width=3))
+        self.vLine_rank_fund = pg.InfiniteLine(angle=90, movable=False)
+        self.hLine_rank_fund = pg.InfiniteLine(angle=0, movable=False)
+        self.ax_rank_fund.addItem(self.vLine_rank_fund, ignoreBounds = True)
+        self.ax_rank_fund.addItem(self.hLine_rank_fund, ignoreBounds = True)
+        self.proxy_rank_fund = pg.SignalProxy(self.ax_rank_fund.scene().sigMouseMoved, rateLimit=60, slot=self.mouseMoved_rank_fund)
+        self.set_tick_strings_general(dates = self.dates_rank_fund, ax_handles = [self.ax_rank_fund.getAxis('bottom')], ticks_num = 6)
+        self.ax_rank_fund.sigXRangeChanged.connect(lambda:self.set_tick_strings_general(dates = self.dates_rank_fund, ax_handles = [self.ax_rank_fund.getAxis('bottom')], ticks_num = 6))
+        #extract grandTotal
+        grand = js.eval('Data_grandTotal')
+        self.dates_current_fund = [(pd.to_datetime(each[0], unit="ms", utc=True).tz_convert('Asia/Shanghai').date()-datetime.date(1, 1, 1)).days for each in grand[0]['data']]
+        self.dates_similar_fund = [(pd.to_datetime(each[0], unit="ms", utc=True).tz_convert('Asia/Shanghai').date()-datetime.date(1, 1, 1)).days for each in grand[1]['data']]
+        self.dates_index = [(pd.to_datetime(each[0], unit="ms", utc=True).tz_convert('Asia/Shanghai').date()-datetime.date(1, 1, 1)).days for each in grand[2]['data']]
+        self.profit_change_current_fund = [each[1] for each in grand[0]['data']]
+        self.profit_change_similar_fund = [each[1] for each in grand[1]['data']]
+        self.profit_change_index = [each[1] for each in grand[2]['data']]
+        self.widget_profit.clear()
+        self.ax_profit_grand = self.widget_profit.addPlot(clear = True)
+        self.ax_profit_grand.getAxis('left').setLabel('涨幅率(%)')
+        self.ax_profit_grand.plot(self.dates_current_fund,self.profit_change_current_fund, clear = True, pen=pg.mkPen('g', width=2))
+        self.ax_profit_grand.plot(self.dates_similar_fund,self.profit_change_similar_fund, clear = False, pen=pg.mkPen('r', width=2))
+        self.ax_profit_grand.plot(self.dates_index,self.profit_change_index, clear = False, pen=pg.mkPen('w', width=2))
+        self.vLine_profit = pg.InfiniteLine(angle=90, movable=False)
+        self.hLine_profit = pg.InfiniteLine(angle=0, movable=False)
+        self.ax_profit_grand.addItem(self.vLine_profit, ignoreBounds = True)
+        self.ax_profit_grand.addItem(self.hLine_profit, ignoreBounds = True)
+        self.proxy_profit = pg.SignalProxy(self.ax_profit_grand.scene().sigMouseMoved, rateLimit=60, slot=self.mouseMoved_profit)
+        self.set_tick_strings_general(dates = self.dates_current_fund, ax_handles = [self.ax_profit_grand.getAxis('bottom')], ticks_num = 6)
+        self.ax_profit_grand.sigXRangeChanged.connect(lambda:self.set_tick_strings_general(dates = self.dates_current_fund, ax_handles = [self.ax_profit_grand.getAxis('bottom')], ticks_num = 6))
 
     def plot_poforlio_fund(self):
         self.widget_portfolio_bar.clear()
@@ -190,7 +227,8 @@ class MyMainWindow(QMainWindow):
         stock_names = list(results_df['股票名称'])
         percents = list(results_df['占净值比例'].apply(float))
         self.lineEdit_sum.setText('{}%'.format(round(sum(percents[0:10]),2)))
-        self.textBrowser_portfolio_list.setPlainText(results_df.to_string(col_space = 20,index=False).replace('\n','\n\n'))
+        self.textBrowser_portfolio_list.setHtml(results_df.to_html(index=False))
+        # self.textBrowser_portfolio_list.setPlainText(results_df.to_string(col_space = 20,index=False).replace('\n','\n\n'))
         bg1 = pg.BarGraphItem(x=list(range(1,len(percents)+1)), height=percents, width=0.3, brush='g')
         self.ax_bar_fund = self.widget_portfolio_bar.addPlot(clear = True)
         self.ax_bar_fund.addItem(bg1)
@@ -209,7 +247,8 @@ class MyMainWindow(QMainWindow):
                 sort_method.append(getattr(self,'comboBox_sort_method{}'.format(i)).currentText()=='升序')
         results = data_extractor.extract_fund_rank(fund_type,sort_by,sort_method,num_items)
         results = results.reset_index()
-        self.textBrowser_fund_sorted_results.setPlainText(results.to_string(col_space = 10).replace('\n','\n\n'))
+        self.textBrowser_fund_sorted_results.setHtml(results.to_html())
+        # self.textBrowser_fund_sorted_results.setPlainText(results.to_string(col_space = 10).replace('\n','\n\n'))
 
     def setup_plot(self):
         self.mplwidget_dapan.clear()
@@ -292,6 +331,30 @@ class MyMainWindow(QMainWindow):
             self.vLine_fund.setPos(mousePoint.x())
             self.hLine_fund.setPos(mousePoint.y())
 
+    def mouseMoved_rank_fund(self,evt):
+        pos = evt[0]  ## using signal proxy turns original arguments into a tuple
+        if self.ax_rank_fund.sceneBoundingRect().contains(pos):
+            mousePoint = self.ax_rank_fund.vb.mapSceneToView(pos)
+            index = int(mousePoint.x())
+            which = np.argmin(abs(np.array(self.dates_current_fund)-index))
+            result = self.percent_rank_fund[which]
+            self.lineEdit_single_point_rank.setText('日期:{};   同类排名百分比:{:4.2f}%;'.format((datetime.date(1, 1, 1)+datetime.timedelta(int(self.dates_rank_fund[which]))).strftime('%Y-%m-%d'),result))
+            self.vLine_rank_fund.setPos(mousePoint.x())
+            self.hLine_rank_fund.setPos(mousePoint.y())
+
+    def mouseMoved_profit(self,evt):
+        pos = evt[0]  ## using signal proxy turns original arguments into a tuple
+        if self.ax_profit_grand.sceneBoundingRect().contains(pos):
+            mousePoint = self.ax_profit_grand.vb.mapSceneToView(pos)
+            index = int(mousePoint.x())
+            which = np.argmin(abs(np.array(self.dates_current_fund)-index))
+            result_current_fund = self.profit_change_current_fund[which]
+            result_similar_fund = self.profit_change_similar_fund[which]
+            result_index = self.profit_change_index[which]
+            self.lineEdit_single_point_profit.setText('日期:{};   所选基金:{:4.2f}%;    同类基金:{:4.2f}%;      沪深300:{:4.2f}%;'.format((datetime.date(1, 1, 1)+datetime.timedelta(int(self.dates_current_fund[which]))).strftime('%Y-%m-%d'),result_current_fund,result_similar_fund,result_index))
+            self.vLine_profit.setPos(mousePoint.x())
+            self.hLine_profit.setPos(mousePoint.y())
+
     def _updatePlot(self):
         self.ax_dapan_zoomin.setXRange(*self.lr.getRegion(), padding=0)
         bound_left, bound_right = self.lr.getRegion()
@@ -353,6 +416,21 @@ class MyMainWindow(QMainWindow):
         self.ax_dapan.getAxis('bottom').setTicks([ticks_dapan])
         self.ax_dapan_zoomin.getAxis('bottom').setTicks([ticks_dapan_zoomin])
 
+    def set_tick_strings_general(self, dates, ax_handles, ticks_num = 6):
+        def _find_nearest_neighbor(values_pool, values):
+            values_return = []
+            values_pool = np.array(values_pool)
+            for each in values:
+                values_return.append(int(values_pool[np.argmin(abs(values_pool - each))]))
+            return list(set(values_return))
+
+        for ax_handle in ax_handles:
+            range_fund = ax_handle.range
+            dates_raw_fund = [range_fund[0] + (range_fund[1] - range_fund[0])/ticks_num*i for i in range(ticks_num)]
+            dates_final_fund = _find_nearest_neighbor(dates,dates_raw_fund)
+            ticks_fund = [(each, (datetime.date(1, 1, 1)+datetime.timedelta(each)).strftime('%y-%m-%d')) for each in dates_final_fund]
+            ax_handle.setTicks([ticks_fund])
+
     def set_tick_strings_fund(self, dates):
         def _find_nearest_neighbor(values_pool, values):
             values_return = []
@@ -372,6 +450,8 @@ class MyMainWindow(QMainWindow):
         ticks_fund_zoomin = [(each, (datetime.date(1, 1, 1)+datetime.timedelta(each)).strftime('%y-%m-%d')) for each in dates_final_fund_zoomin]
         self.ax_fund.getAxis('bottom').setTicks([ticks_fund])
         self.ax_fund_zoomin.getAxis('bottom').setTicks([ticks_fund_zoomin])
+
+
 
 if __name__ == "__main__":
     QApplication.setStyle("windows")

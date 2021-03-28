@@ -785,23 +785,98 @@
                </widget>
               </item>
               <item>
-               <spacer name="horizontalSpacer_9">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
+               <widget class="QLabel" name="label_58">
+                <property name="text">
+                 <string>排序方法</string>
                 </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
+               </widget>
               </item>
-             </layout>
-            </item>
-            <item>
-             <layout class="QGridLayout" name="gridLayout_3">
-              <item row="0" column="2">
+              <item>
+               <widget class="QComboBox" name="comboBox_sort_key1">
+                <item>
+                 <property name="text">
+                  <string>单位净值</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>累计净值</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>日增长率</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>近1周</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>近1月</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>近3月</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>近6月</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>近1年</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>近2年</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>近3年</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>今年来</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>成立来</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="comboBox_sort_method1">
+                <item>
+                 <property name="text">
+                  <string>降序</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>升序</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+              <item>
+               <widget class="Line" name="line">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+               </widget>
+              </item>
+              <item>
                <widget class="QComboBox" name="comboBox_sort_key2">
                 <item>
                  <property name="text">
@@ -870,35 +945,7 @@
                 </item>
                </widget>
               </item>
-              <item row="1" column="0">
-               <widget class="QLabel" name="label_58">
-                <property name="text">
-                 <string>排序方法</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="0">
-               <widget class="QLabel" name="label_57">
-                <property name="text">
-                 <string>排序关键词</string>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="3">
-               <widget class="QComboBox" name="comboBox_sort_method3">
-                <item>
-                 <property name="text">
-                  <string>降序</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>升序</string>
-                 </property>
-                </item>
-               </widget>
-              </item>
-              <item row="1" column="2">
+              <item>
                <widget class="QComboBox" name="comboBox_sort_method2">
                 <item>
                  <property name="text">
@@ -912,85 +959,14 @@
                 </item>
                </widget>
               </item>
-              <item row="1" column="1">
-               <widget class="QComboBox" name="comboBox_sort_method1">
-                <item>
-                 <property name="text">
-                  <string>降序</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>升序</string>
-                 </property>
-                </item>
+              <item>
+               <widget class="Line" name="line_2">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
                </widget>
               </item>
-              <item row="0" column="1">
-               <widget class="QComboBox" name="comboBox_sort_key1">
-                <item>
-                 <property name="text">
-                  <string>单位净值</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>累计净值</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>日增长率</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>近1周</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>近1月</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>近3月</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>近6月</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>近1年</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>近2年</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>近3年</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>今年来</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>成立来</string>
-                 </property>
-                </item>
-               </widget>
-              </item>
-              <item row="0" column="3">
+              <item>
                <widget class="QComboBox" name="comboBox_sort_key3">
                 <item>
                  <property name="text">
@@ -1059,23 +1035,27 @@
                 </item>
                </widget>
               </item>
-              <item row="0" column="4">
-               <spacer name="horizontalSpacer_8">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
+              <item>
+               <widget class="QComboBox" name="comboBox_sort_method3">
+                <item>
+                 <property name="text">
+                  <string>降序</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>升序</string>
+                 </property>
+                </item>
+               </widget>
               </item>
-             </layout>
-            </item>
-            <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_10">
+              <item>
+               <widget class="Line" name="line_3">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+               </widget>
+              </item>
               <item>
                <widget class="QLabel" name="label_59">
                 <property name="text">
@@ -1104,7 +1084,7 @@
                </widget>
               </item>
               <item>
-               <spacer name="horizontalSpacer_7">
+               <spacer name="horizontalSpacer_9">
                 <property name="orientation">
                  <enum>Qt::Horizontal</enum>
                 </property>
@@ -1119,14 +1099,12 @@
              </layout>
             </item>
             <item>
-             <widget class="QLabel" name="label_60">
-              <property name="text">
-               <string>排序结果</string>
-              </property>
-             </widget>
-            </item>
-            <item>
              <widget class="QTextBrowser" name="textBrowser_fund_sorted_results">
+              <property name="font">
+               <font>
+                <pointsize>13</pointsize>
+               </font>
+              </property>
               <property name="horizontalScrollBarPolicy">
                <enum>Qt::ScrollBarAlwaysOn</enum>
               </property>
@@ -1159,7 +1137,7 @@
                </font>
               </property>
               <property name="currentIndex">
-               <number>0</number>
+               <number>2</number>
               </property>
               <widget class="QWidget" name="tab_7">
                <attribute name="title">
@@ -1993,37 +1971,6 @@
                 </item>
                </layout>
               </widget>
-              <widget class="QWidget" name="tab">
-               <attribute name="title">
-                <string>基金波动图</string>
-               </attribute>
-               <layout class="QVBoxLayout" name="verticalLayout_6">
-                <item>
-                 <layout class="QHBoxLayout" name="horizontalLayout_6">
-                  <item>
-                   <widget class="QLabel" name="label_51">
-                    <property name="text">
-                     <string>单点信息</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLineEdit" name="lineEdit_single_point_fund"/>
-                  </item>
-                 </layout>
-                </item>
-                <item>
-                 <widget class="GraphicsLayoutWidget" name="mpl_widget_jijing" native="true">
-                  <property name="font">
-                   <font>
-                    <family>KaiTi</family>
-                    <pointsize>11</pointsize>
-                   </font>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </widget>
               <widget class="QWidget" name="tab_9">
                <attribute name="title">
                 <string>持仓信息</string>
@@ -2072,9 +2019,15 @@
                   </item>
                   <item>
                    <widget class="QComboBox" name="comboBox_quarter">
+                    <property name="minimumSize">
+                     <size>
+                      <width>100</width>
+                      <height>0</height>
+                     </size>
+                    </property>
                     <property name="maximumSize">
                      <size>
-                      <width>50</width>
+                      <width>300</width>
                       <height>16777215</height>
                      </size>
                     </property>
@@ -2164,9 +2117,21 @@
                    <enum>Qt::Horizontal</enum>
                   </property>
                   <widget class="QTextBrowser" name="textBrowser_portfolio_list">
+                   <property name="minimumSize">
+                    <size>
+                     <width>300</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>600</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
                    <property name="font">
                     <font>
-                     <pointsize>12</pointsize>
+                     <pointsize>13</pointsize>
                     </font>
                    </property>
                   </widget>
@@ -2185,6 +2150,85 @@
                    </property>
                   </widget>
                  </widget>
+                </item>
+               </layout>
+              </widget>
+              <widget class="QWidget" name="tab">
+               <attribute name="title">
+                <string>净值波动图</string>
+               </attribute>
+               <layout class="QVBoxLayout" name="verticalLayout_6">
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_6">
+                  <item>
+                   <widget class="QLabel" name="label_51">
+                    <property name="text">
+                     <string>单点信息</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLineEdit" name="lineEdit_single_point_fund"/>
+                  </item>
+                 </layout>
+                </item>
+                <item>
+                 <widget class="GraphicsLayoutWidget" name="mpl_widget_jijing" native="true">
+                  <property name="font">
+                   <font>
+                    <family>KaiTi</family>
+                    <pointsize>11</pointsize>
+                   </font>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+              <widget class="QWidget" name="tab_2">
+               <attribute name="title">
+                <string>排名走势</string>
+               </attribute>
+               <layout class="QVBoxLayout" name="verticalLayout_10">
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_12">
+                  <item>
+                   <widget class="QLabel" name="label_60">
+                    <property name="text">
+                     <string>单点信息</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLineEdit" name="lineEdit_single_point_rank"/>
+                  </item>
+                 </layout>
+                </item>
+                <item>
+                 <widget class="GraphicsLayoutWidget" name="widget_rank" native="true"/>
+                </item>
+               </layout>
+              </widget>
+              <widget class="QWidget" name="tab_8">
+               <attribute name="title">
+                <string>收益走势</string>
+               </attribute>
+               <layout class="QVBoxLayout" name="verticalLayout_11">
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_11">
+                  <item>
+                   <widget class="QLabel" name="label_61">
+                    <property name="text">
+                     <string>单点信息</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLineEdit" name="lineEdit_single_point_profit"/>
+                  </item>
+                 </layout>
+                </item>
+                <item>
+                 <widget class="GraphicsLayoutWidget" name="widget_profit" native="true"/>
                 </item>
                </layout>
               </widget>
