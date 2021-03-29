@@ -83,6 +83,9 @@ def extract_porfolio_info(code, year, quarter):
     condition = results['季度'] == '{}年{}季度股票投资明细'.format(year, quarter)
     return results[condition]
 
-def extract_fund_rank(fund_type, sort_by, sort_method, num_items):
+def extract_fund_rank(fund_type, sort_by, sort_method):
     fund_em_open_fund_rank_df = ak.fund_em_open_fund_rank(symbol=fund_type)
-    return fund_em_open_fund_rank_df.sort_values(by=sort_by,ascending = sort_method).iloc[0:num_items]
+    for each in sort_by:
+        fund_em_open_fund_rank_df[each] = fund_em_open_fund_rank_df[each].replace('',np.nan).astype(float)
+    return fund_em_open_fund_rank_df.sort_values(by=sort_by,ascending = sort_method)
+

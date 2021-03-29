@@ -1084,7 +1084,7 @@
                </widget>
               </item>
               <item>
-               <spacer name="horizontalSpacer_9">
+               <spacer name="horizontalSpacer_7">
                 <property name="orientation">
                  <enum>Qt::Horizontal</enum>
                 </property>
@@ -1095,6 +1095,57 @@
                  </size>
                 </property>
                </spacer>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_57">
+                <property name="text">
+                 <string>单只基金</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_62">
+                <property name="text">
+                 <string>基金代码</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="lineEdit_fund_code_2">
+                <property name="maximumSize">
+                 <size>
+                  <width>100</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>005827</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_63">
+                <property name="text">
+                 <string>排名</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="lineEdit_rank">
+                <property name="maximumSize">
+                 <size>
+                  <width>100</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButton_extract_5">
+                <property name="text">
+                 <string>提取</string>
+                </property>
+               </widget>
               </item>
              </layout>
             </item>
@@ -1118,11 +1169,6 @@
             </item>
            </layout>
           </widget>
-          <widget class="QWidget" name="tab_5">
-           <attribute name="title">
-            <string>基金对比</string>
-           </attribute>
-          </widget>
           <widget class="QWidget" name="tab_4">
            <attribute name="title">
             <string>单只基金</string>
@@ -1137,7 +1183,7 @@
                </font>
               </property>
               <property name="currentIndex">
-               <number>2</number>
+               <number>0</number>
               </property>
               <widget class="QWidget" name="tab_7">
                <attribute name="title">

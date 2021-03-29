@@ -103,6 +103,7 @@ class MyMainWindow(QMainWindow):
         self.pushButton_extract_3.clicked.connect(self.extract_fund_info)
         self.pushButton_extract_4.clicked.connect(self.plot_poforlio_fund)
         self.pushButton_sort_fund.clicked.connect(self.sort_fund_rank)
+        self.pushButton_extract_5.clicked.connect(self.get_fund_rank)
         self.values_000001 = []
         self.values_000016 = []
         self.values_000300 = []
@@ -207,9 +208,10 @@ class MyMainWindow(QMainWindow):
         self.widget_profit.clear()
         self.ax_profit_grand = self.widget_profit.addPlot(clear = True)
         self.ax_profit_grand.getAxis('left').setLabel('涨幅率(%)')
-        self.ax_profit_grand.plot(self.dates_current_fund,self.profit_change_current_fund, clear = True, pen=pg.mkPen('g', width=2))
-        self.ax_profit_grand.plot(self.dates_similar_fund,self.profit_change_similar_fund, clear = False, pen=pg.mkPen('r', width=2))
-        self.ax_profit_grand.plot(self.dates_index,self.profit_change_index, clear = False, pen=pg.mkPen('w', width=2))
+        self.ax_profit_grand.addLegend()
+        self.ax_profit_grand.plot(self.dates_current_fund,self.profit_change_current_fund, clear = True, pen=pg.mkPen('g', width=2),name = self.lineEdit_fund_name.text())
+        self.ax_profit_grand.plot(self.dates_similar_fund,self.profit_change_similar_fund, clear = False, pen=pg.mkPen('r', width=2), name = '同类基金')
+        self.ax_profit_grand.plot(self.dates_index,self.profit_change_index, clear = False, pen=pg.mkPen('w', width=2), name = '沪深300')
         self.vLine_profit = pg.InfiniteLine(angle=90, movable=False)
         self.hLine_profit = pg.InfiniteLine(angle=0, movable=False)
         self.ax_profit_grand.addItem(self.vLine_profit, ignoreBounds = True)
@@ -245,10 +247,18 @@ class MyMainWindow(QMainWindow):
             if text != '无':
                 sort_by.append(text)
                 sort_method.append(getattr(self,'comboBox_sort_method{}'.format(i)).currentText()=='升序')
-        results = data_extractor.extract_fund_rank(fund_type,sort_by,sort_method,num_items)
+        results = data_extractor.extract_fund_rank(fund_type,sort_by,sort_method)
         results = results.reset_index()
-        self.textBrowser_fund_sorted_results.setHtml(results.to_html())
+        self.results_fund_rank = results
+        self.textBrowser_fund_sorted_results.setHtml(results.iloc[0:num_items].to_html())
         # self.textBrowser_fund_sorted_results.setPlainText(results.to_string(col_space = 10).replace('\n','\n\n'))
+
+    def get_fund_rank(self):
+        rank = self.results_fund_rank['基金代码'][self.results_fund_rank['基金代码']==self.lineEdit_fund_code_2.text()].index.values
+        if len(rank)!=0:
+            self.lineEdit_rank.setText(str(rank[0])+'/{}'.format(len(self.results_fund_rank)))
+        else:
+            self.lineEdit_rank.setText('Out of size!')
 
     def setup_plot(self):
         self.mplwidget_dapan.clear()
