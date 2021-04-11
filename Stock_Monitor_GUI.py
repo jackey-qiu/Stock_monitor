@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox
 from PyQt5.QtGui import QPixmap, QImage
 from matplotlib.backends.backend_qt5agg import FigureCanvas
 from matplotlib.figure import Figure
-from PyQt5 import uic
+from PyQt5 import uic, QtCore
 import random
 import numpy as np
 import matplotlib.pyplot as plt
@@ -45,6 +45,75 @@ def error_pop_up(msg_text = 'error', window_title = ['Error','Information','Warn
     # msg.setInformativeText('More information')
     msg.setWindowTitle(window_title)
     msg.exec_()
+
+class PandasModel(QtCore.QAbstractTableModel):
+    """
+    Class to populate a table view with a pandas dataframe
+    """
+    def __init__(self, data, tableviewer, parent=None):
+        QtCore.QAbstractTableModel.__init__(self, parent)
+        self._data = data
+        self.tableviewer = tableviewer
+
+    def rowCount(self, parent=None):
+        return self._data.shape[0]
+
+    def columnCount(self, parent=None):
+        return self._data.shape[1]
+
+    def data(self, index, role):
+        if index.isValid():
+            if role in [QtCore.Qt.DisplayRole, QtCore.Qt.EditRole] and index.column()!=0:
+                return str(self._data.iloc[index.row(), index.column()])
+            if role == QtCore.Qt.BackgroundRole and index.row()%2 == 0:
+                return QtGui.QColor('lightGray')
+            if role == QtCore.Qt.BackgroundRole and index.row()%2 == 1:
+                return QtGui.QColor('cyan')
+            if role == QtCore.Qt.CheckStateRole and index.column()==0:
+                if self._data.iloc[index.row(),index.column()]:
+                    return QtCore.Qt.Checked
+                else:
+                    return QtCore.Qt.Unchecked
+        return None
+
+    def setData(self, index, value, role):
+        if not index.isValid():
+            return False
+        if role == QtCore.Qt.CheckStateRole and index.column() == 0:
+            if value == QtCore.Qt.Checked:
+                self._data.iloc[index.row(),index.column()] = True
+            else:
+                self._data.iloc[index.row(),index.column()] = False
+        else:
+            if str(value)!='':
+                self._data.iloc[index.row(),index.column()] = str(value)
+        self.dataChanged.emit(index, index)
+        self.layoutAboutToBeChanged.emit()
+        self.dataChanged.emit(self.createIndex(0, 0), self.createIndex(self.rowCount(0), self.columnCount(0)))
+        self.layoutChanged.emit()
+        self.tableviewer.resizeColumnsToContents() 
+        return True
+
+    def update_view(self):
+        self.layoutAboutToBeChanged.emit()
+        self.dataChanged.emit(self.createIndex(0, 0), self.createIndex(self.rowCount(0), self.columnCount(0)))
+        self.layoutChanged.emit()
+
+    def headerData(self, rowcol, orientation, role):
+        if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
+            return self._data.columns[rowcol]         
+        if orientation == QtCore.Qt.Vertical and role == QtCore.Qt.DisplayRole:
+            return self._data.index[rowcol]         
+        return None
+
+    def flags(self, index):
+        if not index.isValid():
+           return QtCore.Qt.NoItemFlags
+        else:
+            if index.column()==0:
+                return (QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsUserCheckable)
+            else:
+                return (QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable)
 
 ## Create a subclass of GraphicsObject.
 ## The only required methods are paint() and boundingRect() 
@@ -103,6 +172,8 @@ class MyMainWindow(QMainWindow):
         self.pushButton_extract_4.clicked.connect(self.plot_poforlio_fund)
         self.pushButton_sort_fund.clicked.connect(self.sort_fund_rank)
         self.pushButton_extract_5.clicked.connect(self.get_fund_rank)
+        self.pushButton_add_to_fund_group.clicked.connect(self.add_to_fund_group)
+        self.pushButton_cal_group_profit.clicked.connect(self.calc_profit)
         self.values_000001 = []
         self.values_000016 = []
         self.values_000300 = []
@@ -111,6 +182,58 @@ class MyMainWindow(QMainWindow):
         # self.extract_selected_index()
         self.setup_plot()
         self.data_extractor = data_extractor
+
+    def add_to_fund_group(self):
+        df_selected_fund_groups = self.pandas_model._data[self.pandas_model._data['选择']][['选择','基金代码','基金简称','日期','单位净值']]
+        df_selected_fund_groups['购入日期'] = str([self.pandas_model._data['日期'][0]])
+        df_selected_fund_groups['购入数量'] = str([0])
+        df_selected_fund_groups['卖出日期'] = str([self.pandas_model._data['日期'][0]])
+        df_selected_fund_groups['卖出数量'] = str([0])
+        self.pandas_model_fund_group = PandasModel(data=df_selected_fund_groups,tableviewer = self.tableView_fund_group_list, parent=self)
+        self.tableView_fund_group_list.setModel(self.pandas_model_fund_group)
+        self.tableView_fund_group_list.resizeColumnsToContents() 
+
+    def calc_profit(self):
+        profits = []
+        purchase_info = {}
+        date_start = datetime.date.today()
+        date_end = datetime.date.today()
+        fund_info = data_extractor.extract_multiple_funds(self.pandas_model_fund_group._data['基金代码'].tolist())
+        for i in range(len(self.pandas_model_fund_group._data)):
+            temp_dates = eval(self.pandas_model_fund_group._data.iloc[i]['购入日期'])
+            temp_dates.sort(key=lambda date: datetime.datetime.strptime(date, "%Y-%m-%d"))
+            temp_date = datetime.datetime.strptime(temp_dates[0], "%Y-%m-%d").date()
+            if (temp_date-date_start).days<0:
+                date_start = temp_date
+            purchase_info[self.pandas_model_fund_group._data.iloc[i]['基金代码']] = \
+                {
+                 'buy_in_date':eval(self.pandas_model_fund_group._data.iloc[i]['购入日期']), 
+                 'sell_out_date':eval(self.pandas_model_fund_group._data.iloc[i]['卖出日期']),
+                 'buy_in_quantity':eval(self.pandas_model_fund_group._data.iloc[i]['购入数量']),
+                 'sell_out_quantity':eval(self.pandas_model_fund_group._data.iloc[i]['卖出数量'])
+                }
+        interval_days = (date_end-date_start).days
+        output_dates = [(date_start + datetime.timedelta(days = i)).strftime('%Y-%m-%d') for i in range(1,interval_days)]
+        return_dates = [(date_start + datetime.timedelta(days = i)-datetime.date(1, 1, 1)).days for i in range(1,interval_days)]
+        for output_date in output_dates:
+            profits.append(data_extractor.calc_profit(fund_info, purchase_info, output_date))
+        self.profit_dates = return_dates
+        self.profits = profits
+        #plot the results
+        self.widget_profit_curve.clear()
+        self.ax_profit = self.widget_profit_curve.addPlot(clear = True)
+        self.proxy_profit_investment = pg.SignalProxy(self.ax_profit.scene().sigMouseMoved, rateLimit=60, slot=self.mouseMoved_profit_investment)
+        self.ax_profit.plot(return_dates,profits, clear = True,pen=pg.mkPen('g', width=3))
+        self.set_tick_strings_general(dates = self.profit_dates, ax_handles = [self.ax_profit.getAxis('bottom')], ticks_num = 6)
+        self.ax_profit.sigXRangeChanged.connect(lambda:self.set_tick_strings_general(dates = self.profit_dates, ax_handles = [self.ax_profit.getAxis('bottom')], ticks_num = 6))
+        self.ax_profit.getAxis('left').setLabel('收益率(%)')
+        self.ax_profit.getAxis('bottom').setLabel('日期（年-月-日）')
+        self.vLine_profit_investment = pg.InfiniteLine(angle=90, movable=False)
+        self.hLine_profit_investment = pg.InfiniteLine(angle=0, movable=False)
+        self.ax_profit.addItem(self.vLine_profit_investment, ignoreBounds = True)
+        self.ax_profit.addItem(self.hLine_profit_investment, ignoreBounds = True)
+
+        # return return_dates, profits
 
     def extract_selected_index(self):
         code = data_extractor.index_code_map[self.comboBox_index_type.currentText()]
@@ -249,7 +372,13 @@ class MyMainWindow(QMainWindow):
         results = data_extractor.extract_fund_rank(fund_type,sort_by,sort_method)
         results = results.reset_index()
         self.results_fund_rank = results
-        self.textBrowser_fund_sorted_results.setHtml(results.iloc[0:num_items].to_html())
+        # self.textBrowser_fund_sorted_results.setHtml(results.iloc[0:num_items].to_html())
+        to_be_shown_df = results.iloc[0:num_items]
+        to_be_shown_df['选择'] = False
+        columns = ['选择'] + to_be_shown_df.columns.tolist()[2:-1]
+        self.pandas_model = PandasModel(data=to_be_shown_df[columns],tableviewer = self.tableView_fund_sorted_results, parent=self)
+        self.tableView_fund_sorted_results.setModel(self.pandas_model)
+        self.tableView_fund_sorted_results.resizeColumnsToContents() 
         # self.textBrowser_fund_sorted_results.setPlainText(results.to_string(col_space = 10).replace('\n','\n\n'))
 
     def get_fund_rank(self):
@@ -350,6 +479,17 @@ class MyMainWindow(QMainWindow):
             self.lineEdit_single_point_rank.setText('日期:{};   同类排名百分比:{:4.2f}%;'.format((datetime.date(1, 1, 1)+datetime.timedelta(int(self.dates_rank_fund[which]))).strftime('%Y-%m-%d'),result))
             self.vLine_rank_fund.setPos(mousePoint.x())
             self.hLine_rank_fund.setPos(mousePoint.y())
+
+    def mouseMoved_profit_investment(self,evt):
+        pos = evt[0]  ## using signal proxy turns original arguments into a tuple
+        if self.ax_profit.sceneBoundingRect().contains(pos):
+            mousePoint = self.ax_profit.vb.mapSceneToView(pos)
+            index = int(mousePoint.x())
+            which = np.argmin(abs(np.array(self.profit_dates)-index))
+            result = self.profits[which]
+            self.lineEdit_profit_investment.setText('日期:{};  盈亏率:{:4.2f}%;'.format((datetime.date(1, 1, 1)+datetime.timedelta(int(self.profit_dates[which]))).strftime('%Y-%m-%d'),result))
+            self.vLine_profit_investment.setPos(mousePoint.x())
+            self.hLine_profit_investment.setPos(mousePoint.y())
 
     def mouseMoved_profit(self,evt):
         pos = evt[0]  ## using signal proxy turns original arguments into a tuple

@@ -52,6 +52,45 @@ def extract_one_fund(code = '005827'):
     #使用execjs获取到相应的数据
     jsContent = execjs.compile(content.text)
     return jsContent
+
+def extract_multiple_funds(code_list):
+    fund_info = {}
+    for code in code_list:
+        js = extract_one_fund(code)
+        #extract net fund wealth
+        net_ = js.eval('Data_netWorthTrend')
+        net_values = [each['y'] for each in net_]
+        dates = [(pd.to_datetime(each['x'], unit="ms", utc=True).tz_convert('Asia/Shanghai').date()-datetime.date(1, 1, 1)).days for each in net_]
+        fund_info[code] = {'dates':dates, 'net_wealth':net_values}
+    return fund_info
+
+def calc_profit(fund_info, purchase_info, output_date):
+    #fund_info = {'000001':{'dates':[736941],'net_wealth':[2.8]}}
+    #purchase_info = {'000001':{'buy_in_date':['2021-01-01'], 'sell_out_date':['2021-02-05'],'buy_in_quantity':[10],'sell_out_quantity':[10]}}
+    #output_date = '2021-04-01'
+    def _later_date(date_str1, date_str2):
+        return (datetime.datetime.strptime(date_str1, "%Y-%m-%d").date()-datetime.datetime.strptime(date_str2, "%Y-%m-%d").date()).days>0
+    def _get_price(code, date_str):
+        days = (datetime.datetime.strptime(date_str, "%Y-%m-%d").date() - datetime.date(1, 1, 1)).days
+        return fund_info[code]['net_wealth'][np.argmin(np.abs(np.array(fund_info[code]['dates'])-days))]
+
+    cost_total = 0
+    quantity_in_market = {}
+    amount_in_hand = 0
+    for each in purchase_info:
+        quantity_in_market[each] = 0
+        for i, item in enumerate(purchase_info[each]['buy_in_date']):
+            if _later_date(output_date, item):
+                cost_total += purchase_info[each]['buy_in_quantity'][i]*_get_price(each,item)
+                quantity_in_market[each] += purchase_info[each]['buy_in_quantity'][i]
+        for i, item in enumerate(purchase_info[each]['sell_out_date']):
+            if _later_date(output_date, item):
+                quantity_in_market[each] -= purchase_info[each]['sell_out_quantity'][i]
+                amount_in_hand += purchase_info[each]['sell_out_quantity'][i]*_get_price(each,purchase_info[each]['sell_out_date'][i])
+    amount_in_market = sum([quantity_in_market[each]*_get_price(each, output_date) for each in quantity_in_market])
+    # print(cost_total, amount_in_market, amount_in_hand)
+    return round((amount_in_market + amount_in_hand - cost_total)/cost_total*100,2)
+    
 '''
 get value of each time use: e.g. jsContent.eval('fS_name')
 var fS_name = "易方达蓝筹精选混合";
