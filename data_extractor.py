@@ -80,11 +80,11 @@ def calc_profit(fund_info, purchase_info, output_date):
     for each in purchase_info:
         quantity_in_market[each] = 0
         for i, item in enumerate(purchase_info[each]['buy_in_date']):
-            if _later_date(output_date, item):
+            if _later_date(output_date, item) and purchase_info[each]['buy_in_quantity'][i]!=0:
                 cost_total += purchase_info[each]['buy_in_quantity'][i]*_get_price(each,item)
                 quantity_in_market[each] += purchase_info[each]['buy_in_quantity'][i]
         for i, item in enumerate(purchase_info[each]['sell_out_date']):
-            if _later_date(output_date, item):
+            if _later_date(output_date, item) and purchase_info[each]['sell_out_quantity'][i]!=0:
                 quantity_in_market[each] -= purchase_info[each]['sell_out_quantity'][i]
                 amount_in_hand += purchase_info[each]['sell_out_quantity'][i]*_get_price(each,purchase_info[each]['sell_out_date'][i])
     amount_in_market = sum([quantity_in_market[each]*_get_price(each, output_date) for each in quantity_in_market])

@@ -2372,16 +2372,22 @@
                 <item>
                  <layout class="QHBoxLayout" name="horizontalLayout_10">
                   <item>
+                   <spacer name="horizontalSpacer_9">
+                    <property name="orientation">
+                     <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>40</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                  <item>
                    <widget class="QPushButton" name="pushButton_add_one_row">
                     <property name="text">
                      <string>增加一行</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QPushButton" name="pushButton_remove_one_row">
-                    <property name="text">
-                     <string>删除一行</string>
                     </property>
                    </widget>
                   </item>

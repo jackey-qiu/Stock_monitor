@@ -1,6 +1,6 @@
 import sys,os,qdarkstyle
 import urllib
-from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox
+from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QInputDialog, QMessageBox
 from PyQt5.QtGui import QPixmap, QImage
 from matplotlib.backends.backend_qt5agg import FigureCanvas
 from matplotlib.figure import Figure
@@ -174,6 +174,9 @@ class MyMainWindow(QMainWindow):
         self.pushButton_extract_5.clicked.connect(self.get_fund_rank)
         self.pushButton_add_to_fund_group.clicked.connect(self.add_to_fund_group)
         self.pushButton_cal_group_profit.clicked.connect(self.calc_profit)
+        self.pushButton_add_one_row.clicked.connect(self.append_one_row)
+        self.pushButton_save_fund_group.clicked.connect(self.save_fund_group)
+        self.comboBox_fund_group_list.activated.connect(self.load_fund_group)
         self.values_000001 = []
         self.values_000016 = []
         self.values_000300 = []
@@ -182,6 +185,32 @@ class MyMainWindow(QMainWindow):
         # self.extract_selected_index()
         self.setup_plot()
         self.data_extractor = data_extractor
+        self.fill_fund_groups()
+
+    def fill_fund_groups(self):
+        self.comboBox_fund_group_list.clear()
+        items = os.listdir(os.path.join(script_path,'fund_group'))
+        self.comboBox_fund_group_list.addItems(items)
+
+    def load_fund_group(self):
+        path = os.path.join(script_path, 'fund_group', self.comboBox_fund_group_list.currentText())
+        data = pd.read_csv(path,dtype = str)
+        data['选择'] = data['选择'].astype(bool)
+        if not hasattr(self, 'pandas_model_fund_group'):
+            self.pandas_model_fund_group = PandasModel(data = data,tableviewer = self.tableView_fund_group_list, parent=self) 
+            self.tableView_fund_group_list.setModel(self.pandas_model_fund_group)
+            self.tableView_fund_group_list.resizeColumnsToContents() 
+        else:
+            self.pandas_model_fund_group._data = data
+        self.pandas_model_fund_group.update_view()
+
+    def save_fund_group(self):
+        path, _ = QFileDialog.getSaveFileName(self, "保存基金组合", "", "csv file (*.csv);;")
+        if path:
+            self.pandas_model_fund_group._data.to_csv(path,index=False)
+            self.statusbar.clearMessage()
+            self.statusbar.showMessage('Success to save fund group!')
+            self.fill_fund_groups()
 
     def add_to_fund_group(self):
         df_selected_fund_groups = self.pandas_model._data[self.pandas_model._data['选择']][['选择','基金代码','基金简称','日期','单位净值']]
@@ -193,25 +222,55 @@ class MyMainWindow(QMainWindow):
         self.tableView_fund_group_list.setModel(self.pandas_model_fund_group)
         self.tableView_fund_group_list.resizeColumnsToContents() 
 
+    def append_one_row(self):
+        code, done = QInputDialog.getText(self, '追加一行', '基金代码:')
+        if done:
+            # append_row = self.pandas_model._data[self.pandas_model._data['基金代码']==code][['选择','基金代码','基金简称','日期','单位净值']]
+            append_row = self.results_fund_rank[self.results_fund_rank['基金代码']==code][['基金代码','基金简称','日期','单位净值']]
+            append_row['购入日期'] = str([self.pandas_model._data['日期'][0]])
+            append_row['购入数量'] = str([0])
+            append_row['卖出日期'] = str([self.pandas_model._data['日期'][0]])
+            append_row['卖出数量'] = str([0])
+            append_row.insert(0,column = '选择', value = True)
+            self.pandas_model_fund_group._data = pd.concat([self.pandas_model_fund_group._data,append_row])
+            self.pandas_model_fund_group.update_view()
+
     def calc_profit(self):
+        def _to_days(date_str):
+            return (datetime.datetime.strptime(date_str, "%Y-%m-%d").date() - datetime.date(1, 1, 1)).days
+
+        def _extract_purchase_dates(purchase_info):
+            buy_in_dates = []
+            sell_out_dates = []
+            for each in purchase_info:
+                for i, item in enumerate(purchase_info[each]['buy_in_date']):
+                    if purchase_info[each]['buy_in_quantity'][i]!=0:
+                        buy_in_dates.append(_to_days(item))
+                for i, item in enumerate(purchase_info[each]['sell_out_date']):
+                    if purchase_info[each]['sell_out_quantity'][i]!=0:
+                        sell_out_dates.append(_to_days(item))
+            return buy_in_dates, sell_out_dates
+            
         profits = []
         purchase_info = {}
         date_start = datetime.date.today()
         date_end = datetime.date.today()
         fund_info = data_extractor.extract_multiple_funds(self.pandas_model_fund_group._data['基金代码'].tolist())
         for i in range(len(self.pandas_model_fund_group._data)):
-            temp_dates = eval(self.pandas_model_fund_group._data.iloc[i]['购入日期'])
-            temp_dates.sort(key=lambda date: datetime.datetime.strptime(date, "%Y-%m-%d"))
-            temp_date = datetime.datetime.strptime(temp_dates[0], "%Y-%m-%d").date()
-            if (temp_date-date_start).days<0:
-                date_start = temp_date
-            purchase_info[self.pandas_model_fund_group._data.iloc[i]['基金代码']] = \
-                {
-                 'buy_in_date':eval(self.pandas_model_fund_group._data.iloc[i]['购入日期']), 
-                 'sell_out_date':eval(self.pandas_model_fund_group._data.iloc[i]['卖出日期']),
-                 'buy_in_quantity':eval(self.pandas_model_fund_group._data.iloc[i]['购入数量']),
-                 'sell_out_quantity':eval(self.pandas_model_fund_group._data.iloc[i]['卖出数量'])
-                }
+            if self.pandas_model_fund_group._data.iloc[i]['选择']:
+                temp_dates = eval(self.pandas_model_fund_group._data.iloc[i]['购入日期'])
+                temp_dates.sort(key=lambda date: datetime.datetime.strptime(date, "%Y-%m-%d"))
+                temp_date = datetime.datetime.strptime(temp_dates[0], "%Y-%m-%d").date()
+                if (temp_date-date_start).days<0:
+                    date_start = temp_date
+                purchase_info[self.pandas_model_fund_group._data.iloc[i]['基金代码']] = \
+                    {
+                    'buy_in_date':eval(self.pandas_model_fund_group._data.iloc[i]['购入日期']), 
+                    'sell_out_date':eval(self.pandas_model_fund_group._data.iloc[i]['卖出日期']),
+                    'buy_in_quantity':eval(self.pandas_model_fund_group._data.iloc[i]['购入数量']),
+                    'sell_out_quantity':eval(self.pandas_model_fund_group._data.iloc[i]['卖出数量'])
+                    }
+        
         interval_days = (date_end-date_start).days
         output_dates = [(date_start + datetime.timedelta(days = i)).strftime('%Y-%m-%d') for i in range(1,interval_days)]
         return_dates = [(date_start + datetime.timedelta(days = i)-datetime.date(1, 1, 1)).days for i in range(1,interval_days)]
@@ -219,11 +278,26 @@ class MyMainWindow(QMainWindow):
             profits.append(data_extractor.calc_profit(fund_info, purchase_info, output_date))
         self.profit_dates = return_dates
         self.profits = profits
+        buy_in_dates, sell_out_dates = _extract_purchase_dates(purchase_info)
         #plot the results
         self.widget_profit_curve.clear()
         self.ax_profit = self.widget_profit_curve.addPlot(clear = True)
         self.proxy_profit_investment = pg.SignalProxy(self.ax_profit.scene().sigMouseMoved, rateLimit=60, slot=self.mouseMoved_profit_investment)
         self.ax_profit.plot(return_dates,profits, clear = True,pen=pg.mkPen('g', width=3))
+        self.profits_buy_in = [profits[0]]
+        self.profits_sell_out = []
+        self.buy_in_dates, self.sell_out_dates = [return_dates[0]], []
+        for each in buy_in_dates:
+            if each in return_dates:
+                self.profits_buy_in.append(profits[return_dates.index(each)])
+                self.buy_in_dates.append(each)
+        for each in sell_out_dates:
+            if each in return_dates:
+                self.profits_sell_out.append(profits[return_dates.index(each)])
+                self.sell_out_dates.append(each)
+        self.ax_profit.addLegend()
+        self.ax_profit.plot(self.buy_in_dates, self.profits_buy_in, pen=None, symbolBrush=(200,0,0), symbolPen='w', symbol='o', symbolSize=10, name = '买入')
+        self.ax_profit.plot(self.sell_out_dates, self.profits_sell_out, pen=None, symbolBrush=(0, 0,200), symbolPen='w', symbol='o', symbolSize=10, name = '卖出')
         self.set_tick_strings_general(dates = self.profit_dates, ax_handles = [self.ax_profit.getAxis('bottom')], ticks_num = 6)
         self.ax_profit.sigXRangeChanged.connect(lambda:self.set_tick_strings_general(dates = self.profit_dates, ax_handles = [self.ax_profit.getAxis('bottom')], ticks_num = 6))
         self.ax_profit.getAxis('left').setLabel('收益率(%)')
