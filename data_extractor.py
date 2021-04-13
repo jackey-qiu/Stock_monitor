@@ -89,7 +89,7 @@ def calc_profit(fund_info, purchase_info, output_date):
                 amount_in_hand += purchase_info[each]['sell_out_quantity'][i]*_get_price(each,purchase_info[each]['sell_out_date'][i])
     amount_in_market = sum([quantity_in_market[each]*_get_price(each, output_date) for each in quantity_in_market])
     # print(cost_total, amount_in_market, amount_in_hand)
-    return round((amount_in_market + amount_in_hand - cost_total)/cost_total*100,2)
+    return round((amount_in_market + amount_in_hand - cost_total)/cost_total*100,2), amount_in_market+amount_in_hand, cost_total
     
 '''
 get value of each time use: e.g. jsContent.eval('fS_name')

@@ -252,6 +252,8 @@ class MyMainWindow(QMainWindow):
             return buy_in_dates, sell_out_dates
             
         profits = []
+        total_investment = []
+        total_cost = []
         purchase_info = {}
         date_start = datetime.date.today()
         date_end = datetime.date.today()
@@ -275,11 +277,20 @@ class MyMainWindow(QMainWindow):
         output_dates = [(date_start + datetime.timedelta(days = i)).strftime('%Y-%m-%d') for i in range(1,interval_days)]
         return_dates = [(date_start + datetime.timedelta(days = i)-datetime.date(1, 1, 1)).days for i in range(1,interval_days)]
         for output_date in output_dates:
-            profits.append(data_extractor.calc_profit(fund_info, purchase_info, output_date))
+            _profit, _amount, _cost = data_extractor.calc_profit(fund_info, purchase_info, output_date)
+            profits.append(_profit)
+            total_investment.append(_amount)
+            total_cost.append(_cost)
         self.profit_dates = return_dates
         self.profits = profits
+        self.total_investment = total_investment
+        self.total_cost = total_cost
         buy_in_dates, sell_out_dates = _extract_purchase_dates(purchase_info)
         #plot the results
+        try:
+            [self.ax_profit.scene().removeItem(each) for each in self.ax_profit_right]
+        except:
+            pass
         self.widget_profit_curve.clear()
         self.ax_profit = self.widget_profit_curve.addPlot(clear = True)
         self.proxy_profit_investment = pg.SignalProxy(self.ax_profit.scene().sigMouseMoved, rateLimit=60, slot=self.mouseMoved_profit_investment)
@@ -302,12 +313,39 @@ class MyMainWindow(QMainWindow):
         self.ax_profit.sigXRangeChanged.connect(lambda:self.set_tick_strings_general(dates = self.profit_dates, ax_handles = [self.ax_profit.getAxis('bottom')], ticks_num = 6))
         self.ax_profit.getAxis('left').setLabel('收益率(%)')
         self.ax_profit.getAxis('bottom').setLabel('日期（年-月-日）')
+        self.ax_profit_right = self._add_y_axis(self.ax_profit, '投资资产（元）',2, ['总投资','总成本'])
+        self.ax_profit_right[0].setData(x=return_dates, y=self.total_investment)
+        self.ax_profit_right[0].setPen(pg.mkPen('y', width=3))
+        self.ax_profit_right[1].setData(x=return_dates, y=self.total_cost)
+        self.ax_profit_right[1].setPen(pg.mkPen('r', width=3))
         self.vLine_profit_investment = pg.InfiniteLine(angle=90, movable=False)
         self.hLine_profit_investment = pg.InfiniteLine(angle=0, movable=False)
         self.ax_profit.addItem(self.vLine_profit_investment, ignoreBounds = True)
         self.ax_profit.addItem(self.hLine_profit_investment, ignoreBounds = True)
 
         # return return_dates, profits
+
+    def _add_y_axis(self, original_ax, y_label, number_curves = 1, names = []):
+        if len(names)<number_curves:
+            names = ['curve_{}'.format(each+1) for each in range(number_curves)]
+        original_ax.showAxis('right')
+        original_ax.setLabel('right', y_label)
+        original_ax.getAxis('right').setPen(pg.mkPen(color='#025b94'))
+        p2 = pg.ViewBox()
+        original_ax.scene().addItem(p2)
+        original_ax.getAxis('right').linkToView(p2)
+        p2.setXLink(original_ax)
+        curves = []
+        for i in range(number_curves):
+            curves.append(pg.PlotCurveItem(name=names[i]))
+            p2.addItem(curves[-1])
+        self._updateViews(p2, original_ax)
+        original_ax.getViewBox().sigResized.connect(lambda:self._updateViews(p2, original_ax))
+        return curves
+
+    def _updateViews(self,p2, p):
+        p2.setGeometry(p.getViewBox().sceneBoundingRect())
+        p2.linkedViewChanged(p.getViewBox(), p2.XAxis)
 
     def extract_selected_index(self):
         code = data_extractor.index_code_map[self.comboBox_index_type.currentText()]
