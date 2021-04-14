@@ -769,7 +769,7 @@
            </font>
           </property>
           <property name="currentIndex">
-           <number>1</number>
+           <number>2</number>
           </property>
           <widget class="QWidget" name="tab_3">
            <attribute name="title">
@@ -2298,7 +2298,21 @@
            <attribute name="title">
             <string>资产配置</string>
            </attribute>
-           <layout class="QHBoxLayout" name="horizontalLayout_14">
+           <layout class="QVBoxLayout" name="verticalLayout_10">
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_11">
+              <item>
+               <widget class="QLabel" name="label_68">
+                <property name="text">
+                 <string>单点收益率</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="lineEdit_profit_investment"/>
+              </item>
+             </layout>
+            </item>
             <item>
              <widget class="QSplitter" name="splitter_3">
               <property name="orientation">
@@ -2402,30 +2416,33 @@
                <property name="frameShadow">
                 <enum>QFrame::Raised</enum>
                </property>
-               <layout class="QVBoxLayout" name="verticalLayout_13">
+               <layout class="QHBoxLayout" name="horizontalLayout_12">
                 <item>
-                 <layout class="QHBoxLayout" name="horizontalLayout_15">
-                  <item>
-                   <widget class="QLabel" name="label_64">
-                    <property name="text">
-                     <string>收益曲线</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLabel" name="label_68">
-                    <property name="text">
-                     <string>单点收益率</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLineEdit" name="lineEdit_profit_investment"/>
-                  </item>
-                 </layout>
-                </item>
-                <item>
-                 <widget class="GraphicsLayoutWidget" name="widget_profit_curve" native="true"/>
+                 <widget class="QTabWidget" name="tabWidget_3">
+                  <property name="currentIndex">
+                   <number>0</number>
+                  </property>
+                  <widget class="QWidget" name="tab_2">
+                   <attribute name="title">
+                    <string>盈亏曲线</string>
+                   </attribute>
+                   <layout class="QVBoxLayout" name="verticalLayout_13">
+                    <item>
+                     <widget class="GraphicsLayoutWidget" name="widget_profit_curve" native="true"/>
+                    </item>
+                   </layout>
+                  </widget>
+                  <widget class="QWidget" name="tab_8">
+                   <attribute name="title">
+                    <string>基金对比</string>
+                   </attribute>
+                   <layout class="QVBoxLayout" name="verticalLayout_11">
+                    <item>
+                     <widget class="GraphicsLayoutWidget" name="widget_fund_groups" native="true"/>
+                    </item>
+                   </layout>
+                  </widget>
+                 </widget>
                 </item>
                </layout>
               </widget>
