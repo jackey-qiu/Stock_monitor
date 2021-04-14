@@ -196,6 +196,7 @@ class MyMainWindow(QMainWindow):
         path = os.path.join(script_path, 'fund_group', self.comboBox_fund_group_list.currentText())
         data = pd.read_csv(path,dtype = str)
         data['选择'] = data['选择'].astype(bool)
+        data.sort_values(by=['基金代码','购入日期'], inplace = True)
         if not hasattr(self, 'pandas_model_fund_group'):
             self.pandas_model_fund_group = PandasModel(data = data,tableviewer = self.tableView_fund_group_list, parent=self) 
             self.tableView_fund_group_list.setModel(self.pandas_model_fund_group)
@@ -242,14 +243,23 @@ class MyMainWindow(QMainWindow):
         def _extract_purchase_dates(purchase_info):
             buy_in_dates = []
             sell_out_dates = []
+            buy_in_quantity = []
+            sell_out_quantity = []
+            buy_in_code = []
+            sell_out_code = []
             for each in purchase_info:
                 for i, item in enumerate(purchase_info[each]['buy_in_date']):
                     if purchase_info[each]['buy_in_quantity'][i]!=0:
                         buy_in_dates.append(_to_days(item))
+                        buy_in_quantity.append(purchase_info[each]['buy_in_quantity'][i])
+                        buy_in_code.append(each)
                 for i, item in enumerate(purchase_info[each]['sell_out_date']):
                     if purchase_info[each]['sell_out_quantity'][i]!=0:
                         sell_out_dates.append(_to_days(item))
-            return buy_in_dates, sell_out_dates
+                        sell_out_quantity.append(purchase_info[each]['sell_out_quantity'][i])
+                        sell_out_code.append(each)
+            # print(buy_in_dates, sell_out_dates, buy_in_code, sell_out_code, buy_in_quantity, sell_out_quantity)
+            return buy_in_dates, sell_out_dates, buy_in_code, sell_out_code, buy_in_quantity, sell_out_quantity
             
         profits = []
         total_investment = []
@@ -265,17 +275,20 @@ class MyMainWindow(QMainWindow):
                 temp_date = datetime.datetime.strptime(temp_dates[0], "%Y-%m-%d").date()
                 if (temp_date-date_start).days<0:
                     date_start = temp_date
-                purchase_info[self.pandas_model_fund_group._data.iloc[i]['基金代码']] = \
-                    {
-                    'buy_in_date':eval(self.pandas_model_fund_group._data.iloc[i]['购入日期']), 
-                    'sell_out_date':eval(self.pandas_model_fund_group._data.iloc[i]['卖出日期']),
-                    'buy_in_quantity':eval(self.pandas_model_fund_group._data.iloc[i]['购入数量']),
-                    'sell_out_quantity':eval(self.pandas_model_fund_group._data.iloc[i]['卖出数量'])
-                    }
-        
+                fund_code = self.pandas_model_fund_group._data.iloc[i]['基金代码']
+                if fund_code not in purchase_info:
+                    purchase_info[fund_code] = {}
+                purchase_info[fund_code] = \
+                        {
+                        'buy_in_date':purchase_info[fund_code].get('buy_in_date',[])+eval(self.pandas_model_fund_group._data.iloc[i]['购入日期']), 
+                        'sell_out_date':purchase_info[fund_code].get('sell_out_date',[])+eval(self.pandas_model_fund_group._data.iloc[i]['卖出日期']),
+                        'buy_in_quantity':purchase_info[fund_code].get('buy_in_quantity',[])+eval(self.pandas_model_fund_group._data.iloc[i]['购入数量']),
+                        'sell_out_quantity':purchase_info[fund_code].get('sell_out_quantity',[])+eval(self.pandas_model_fund_group._data.iloc[i]['卖出数量'])
+                        }
+        self.purchase_info = purchase_info
         interval_days = (date_end-date_start).days
-        output_dates = [(date_start + datetime.timedelta(days = i)).strftime('%Y-%m-%d') for i in range(1,interval_days)]
-        return_dates = [(date_start + datetime.timedelta(days = i)-datetime.date(1, 1, 1)).days for i in range(1,interval_days)]
+        output_dates = [(date_start + datetime.timedelta(days = i)).strftime('%Y-%m-%d') for i in range(0,interval_days+1)]
+        return_dates = [(date_start + datetime.timedelta(days = i)-datetime.date(1, 1, 1)).days for i in range(0,interval_days+1)]
         for output_date in output_dates:
             _profit, _amount, _cost = data_extractor.calc_profit(fund_info, purchase_info, output_date)
             profits.append(_profit)
@@ -285,7 +298,8 @@ class MyMainWindow(QMainWindow):
         self.profits = profits
         self.total_investment = total_investment
         self.total_cost = total_cost
-        buy_in_dates, sell_out_dates = _extract_purchase_dates(purchase_info)
+        #buy_in_dates, sell_out_dates = _extract_purchase_dates(purchase_info)
+        buy_in_dates, sell_out_dates, buy_in_code, sell_out_code, buy_in_quantity, sell_out_quantity = _extract_purchase_dates(purchase_info)
         #plot the results
         try:
             [self.ax_profit.scene().removeItem(each) for each in self.ax_profit_right]
@@ -294,30 +308,41 @@ class MyMainWindow(QMainWindow):
         self.widget_profit_curve.clear()
         self.ax_profit = self.widget_profit_curve.addPlot(clear = True)
         self.proxy_profit_investment = pg.SignalProxy(self.ax_profit.scene().sigMouseMoved, rateLimit=60, slot=self.mouseMoved_profit_investment)
-        self.ax_profit.plot(return_dates,profits, clear = True,pen=pg.mkPen('g', width=3))
-        self.profits_buy_in = [profits[0]]
+        self.ax_profit.plot(return_dates,profits, clear = True,pen=pg.mkPen('g', width=2))
+        self.profits_buy_in = []#[profits[0]]
         self.profits_sell_out = []
-        self.buy_in_dates, self.sell_out_dates = [return_dates[0]], []
-        for each in buy_in_dates:
+        self.buy_in_dates, self.sell_out_dates = [],[]#[return_dates[0]], []
+        self.buy_in_code, self.sell_out_code = [],[]#[buy_in_code[0]], []
+        self.buy_in_quantity, self.sell_out_quantity = [],[]#[buy_in_quantity[0]], []
+        for i, each in enumerate(buy_in_dates):
             if each in return_dates:
                 self.profits_buy_in.append(profits[return_dates.index(each)])
                 self.buy_in_dates.append(each)
-        for each in sell_out_dates:
+                self.buy_in_code.append(buy_in_code[i])
+                self.buy_in_quantity.append(buy_in_quantity[i])
+        for i, each in enumerate(sell_out_dates):
             if each in return_dates:
                 self.profits_sell_out.append(profits[return_dates.index(each)])
                 self.sell_out_dates.append(each)
+                self.sell_out_code.append(sell_out_code[i])
+                self.sell_out_quantity.append(sell_out_quantity[i])
         self.ax_profit.addLegend()
-        self.ax_profit.plot(self.buy_in_dates, self.profits_buy_in, pen=None, symbolBrush=(200,0,0), symbolPen='w', symbol='o', symbolSize=10, name = '买入')
-        self.ax_profit.plot(self.sell_out_dates, self.profits_sell_out, pen=None, symbolBrush=(0, 0,200), symbolPen='w', symbol='o', symbolSize=10, name = '卖出')
+        self.ax_profit_movable = self.ax_profit.plot(self.buy_in_dates[0:1], self.profits_buy_in[0:], pen=None, symbolBrush=(200,200,0), symbolPen='w', symbol='o', symbolSize=10)
+        self.ax_profit.plot(self.buy_in_dates, self.profits_buy_in, pen=None, symbolBrush=(200,0,0), symbolPen='w', symbol='arrow_up', symbolSize=40, name = '买入')
+        self.ax_profit.plot(self.sell_out_dates, self.profits_sell_out, pen=None, symbolBrush=(0, 0,200), symbolPen='w', symbol='arrow_down', symbolSize=40, name = '卖出')
         self.set_tick_strings_general(dates = self.profit_dates, ax_handles = [self.ax_profit.getAxis('bottom')], ticks_num = 6)
         self.ax_profit.sigXRangeChanged.connect(lambda:self.set_tick_strings_general(dates = self.profit_dates, ax_handles = [self.ax_profit.getAxis('bottom')], ticks_num = 6))
         self.ax_profit.getAxis('left').setLabel('收益率(%)')
+        self.ax_profit.getAxis('left').setPen(pg.mkPen('g', width=2))
         self.ax_profit.getAxis('bottom').setLabel('日期（年-月-日）')
-        self.ax_profit_right = self._add_y_axis(self.ax_profit, '投资资产（元）',2, ['总投资','总成本'])
+        self.ax_profit_right = self._add_y_axis(self.ax_profit, '投资资产（元）',4, ['总投资','总成本','单点总投资','单点总成本'])
         self.ax_profit_right[0].setData(x=return_dates, y=self.total_investment)
-        self.ax_profit_right[0].setPen(pg.mkPen('y', width=3))
+        self.ax_profit_right[0].setPen(pg.mkPen('y', width=2))
+        self.ax_profit_right[2].setData(x=return_dates[0:1], y=self.total_investment[0:1],pen=None, symbolBrush=(0,100,100),symbol='o', symbolSize=10)
         self.ax_profit_right[1].setData(x=return_dates, y=self.total_cost)
-        self.ax_profit_right[1].setPen(pg.mkPen('r', width=3))
+        self.ax_profit_right[1].setPen(pg.mkPen('r', width=2))
+        self.ax_profit_right[3].setData(x=return_dates[0:1], y=self.total_cost[0:1],pen=None, symbolBrush=(200,0,50),symbol='o', symbolSize=10)
+        # self.ax_profit_right[3].setData(x=return_dates[0:5], y=self.total_cost[0:5],symbolBrush=(200,0,0),symbol='o', symbolSize=10)
         self.vLine_profit_investment = pg.InfiniteLine(angle=90, movable=False)
         self.hLine_profit_investment = pg.InfiniteLine(angle=0, movable=False)
         self.ax_profit.addItem(self.vLine_profit_investment, ignoreBounds = True)
@@ -330,14 +355,15 @@ class MyMainWindow(QMainWindow):
             names = ['curve_{}'.format(each+1) for each in range(number_curves)]
         original_ax.showAxis('right')
         original_ax.setLabel('right', y_label)
-        original_ax.getAxis('right').setPen(pg.mkPen(color='#025b94'))
+        original_ax.getAxis('right').setPen(pg.mkPen(color='y', width = 2))
         p2 = pg.ViewBox()
         original_ax.scene().addItem(p2)
         original_ax.getAxis('right').linkToView(p2)
         p2.setXLink(original_ax)
         curves = []
         for i in range(number_curves):
-            curves.append(pg.PlotCurveItem(name=names[i]))
+            # curves.append(pg.PlotCurveItem(name=names[i]))
+            curves.append(pg.PlotDataItem(name=names[i]))
             p2.addItem(curves[-1])
         self._updateViews(p2, original_ax)
         original_ax.getViewBox().sigResized.connect(lambda:self._updateViews(p2, original_ax))
@@ -352,6 +378,13 @@ class MyMainWindow(QMainWindow):
         if len(getattr(self,'values_{}'.format(code)))==0:
             setattr(self,'values_{}'.format(code),data_extractor.extract_all_records(code))
         self.set_current_price(code)
+
+    def _format_axis(self, ax_list):
+        for each in ax_list:
+            each.showAxis('top')
+            each.showAxis('right')
+            each.getAxis('top').setTicks([])
+            each.getAxis('right').setTicks([])
 
     def extract_fund_info(self):
         js = data_extractor.extract_one_fund(code = self.lineEdit_fund_code.text())
@@ -396,10 +429,12 @@ class MyMainWindow(QMainWindow):
         self.dates_fund = dates
         self.net_values_fund = net_values
         self.mpl_widget_jijing.clear()
-        self.ax_fund = self.mpl_widget_jijing.addPlot(clear = True)
-        self.ax_fund_zoomin = self.mpl_widget_jijing.addPlot(clear = True)
-        self.ax_fund.plot(dates,net_values, clear = True,pen=pg.mkPen('g', width=3))
-        self.ax_fund_zoomin.plot(dates,net_values, clear = True,pen=pg.mkPen('r', width=3))
+        self.ax_fund = self.mpl_widget_jijing.addPlot(clear = True, title = '基金净值走势')
+        self.ax_fund.getAxis('left').setLabel('基金净值(元)')
+        self.ax_fund_zoomin = self.mpl_widget_jijing.addPlot(clear = True, title = '基金净值走势')
+        self.ax_fund_zoomin.getAxis('left').setLabel('基金净值(元)')
+        self.ax_fund.plot(dates,net_values, clear = True,pen=pg.mkPen('g', width=2))
+        self.ax_fund_zoomin.plot(dates,net_values, clear = True,pen=pg.mkPen('r', width=2))
         self.lr_fund = pg.LinearRegionItem(bounds=[min(dates),max(dates)])
         self.lr_fund.setZValue(-10)
         self.lr_fund.sigRegionChanged.connect(self._updatePlot_fund)
@@ -417,13 +452,15 @@ class MyMainWindow(QMainWindow):
         self.ax_fund.sigXRangeChanged.connect(lambda:self.set_tick_strings_fund(self.dates_fund))
         self.ax_fund_zoomin.sigXRangeChanged.connect(lambda:self.set_tick_strings_fund(self.dates_fund))
         #extract rank among funds of similar type
+        self.mpl_widget_jijing.nextRow()
         rank = js.eval('Data_rateInSimilarPersent')
         self.percent_rank_fund = [each[1] for each in rank]
         self.dates_rank_fund = [(pd.to_datetime(each[0], unit="ms", utc=True).tz_convert('Asia/Shanghai').date()-datetime.date(1, 1, 1)).days for each in rank]
-        self.widget_rank.clear()
-        self.ax_rank_fund = self.widget_rank.addPlot(clear = True)
+        #self.widget_rank.clear()
+        #self.ax_rank_fund = self.widget_rank.addPlot(clear = True)
+        self.ax_rank_fund = self.mpl_widget_jijing.addPlot(clear = True, title = '排名走势')
         self.ax_rank_fund.getAxis('left').setLabel('排名百分比(%)')
-        self.ax_rank_fund.plot(self.dates_rank_fund,self.percent_rank_fund, clear = True, pen=pg.mkPen('w', width=3))
+        self.ax_rank_fund.plot(self.dates_rank_fund,self.percent_rank_fund, clear = True, pen=pg.mkPen('w', width=2))
         self.vLine_rank_fund = pg.InfiniteLine(angle=90, movable=False)
         self.hLine_rank_fund = pg.InfiniteLine(angle=0, movable=False)
         self.ax_rank_fund.addItem(self.vLine_rank_fund, ignoreBounds = True)
@@ -439,8 +476,9 @@ class MyMainWindow(QMainWindow):
         self.profit_change_current_fund = [each[1] for each in grand[0]['data']]
         self.profit_change_similar_fund = [each[1] for each in grand[1]['data']]
         self.profit_change_index = [each[1] for each in grand[2]['data']]
-        self.widget_profit.clear()
-        self.ax_profit_grand = self.widget_profit.addPlot(clear = True)
+        # self.widget_profit.clear()
+        # self.ax_profit_grand = self.widget_profit.addPlot(clear = True)
+        self.ax_profit_grand = self.mpl_widget_jijing.addPlot(clear = True, title = '收益走势')
         self.ax_profit_grand.getAxis('left').setLabel('涨幅率(%)')
         self.ax_profit_grand.addLegend()
         self.ax_profit_grand.plot(self.dates_current_fund,self.profit_change_current_fund, clear = True, pen=pg.mkPen('g', width=2),name = self.lineEdit_fund_name.text())
@@ -453,6 +491,7 @@ class MyMainWindow(QMainWindow):
         self.proxy_profit = pg.SignalProxy(self.ax_profit_grand.scene().sigMouseMoved, rateLimit=60, slot=self.mouseMoved_profit)
         self.set_tick_strings_general(dates = self.dates_current_fund, ax_handles = [self.ax_profit_grand.getAxis('bottom')], ticks_num = 6)
         self.ax_profit_grand.sigXRangeChanged.connect(lambda:self.set_tick_strings_general(dates = self.dates_current_fund, ax_handles = [self.ax_profit_grand.getAxis('bottom')], ticks_num = 6))
+        self._format_axis([self.ax_fund, self.ax_fund_zoomin, self.ax_rank_fund, self.ax_profit_grand])
 
     def plot_poforlio_fund(self):
         self.widget_portfolio_bar.clear()
@@ -586,9 +625,9 @@ class MyMainWindow(QMainWindow):
         if self.ax_rank_fund.sceneBoundingRect().contains(pos):
             mousePoint = self.ax_rank_fund.vb.mapSceneToView(pos)
             index = int(mousePoint.x())
-            which = np.argmin(abs(np.array(self.dates_current_fund)-index))
+            which = np.argmin(abs(np.array(self.dates_rank_fund)-index))
             result = self.percent_rank_fund[which]
-            self.lineEdit_single_point_rank.setText('日期:{};   同类排名百分比:{:4.2f}%;'.format((datetime.date(1, 1, 1)+datetime.timedelta(int(self.dates_rank_fund[which]))).strftime('%Y-%m-%d'),result))
+            self.lineEdit_single_point_fund.setText('日期:{};   同类排名百分比:{:4.2f}%;'.format((datetime.date(1, 1, 1)+datetime.timedelta(int(self.dates_rank_fund[which]))).strftime('%Y-%m-%d'),result))
             self.vLine_rank_fund.setPos(mousePoint.x())
             self.hLine_rank_fund.setPos(mousePoint.y())
 
@@ -599,7 +638,26 @@ class MyMainWindow(QMainWindow):
             index = int(mousePoint.x())
             which = np.argmin(abs(np.array(self.profit_dates)-index))
             result = self.profits[which]
-            self.lineEdit_profit_investment.setText('日期:{};  盈亏率:{:4.2f}%;'.format((datetime.date(1, 1, 1)+datetime.timedelta(int(self.profit_dates[which]))).strftime('%Y-%m-%d'),result))
+            cost = self.total_cost[which]
+            wealth = self.total_investment[which]
+            self.ax_profit_movable.setData(x=[self.profit_dates[which]],y=[result])
+            self.ax_profit_right[2].setData(x=[self.profit_dates[which]],y=[wealth])
+            self.ax_profit_right[3].setData(x=[self.profit_dates[which]],y=[cost])
+            if int(self.profit_dates[which]) in self.buy_in_dates:
+                index_ = self.buy_in_dates.index(int(self.profit_dates[which]))
+                fund_name = self.pandas_model_fund_group._data[self.pandas_model_fund_group._data['基金代码']==self.buy_in_code[index_]].iloc[0,2] 
+                buy_in_info = '买入基金:‘{}’，{}份'.format(fund_name, self.buy_in_quantity[index_])
+                # buy_in_info = '买入基金:‘{}’，{}份'.format(self.buy_in_code[index_], self.buy_in_quantity[index_])
+            else:
+                buy_in_info = ''
+            if int(self.profit_dates[which]) in self.sell_out_dates:
+                index_ = self.sell_out_dates.index(int(self.profit_dates[which]))
+                fund_name = self.pandas_model_fund_group._data[self.pandas_model_fund_group._data['基金代码']==self.sell_out_code[index_]].iloc[0,2]
+                sell_out_info = '卖出基金:‘{}’，{}份'.format(fund_name, self.sell_out_quantity[index_])
+                #sell_out_info = '卖出基金:‘{}’，{}份'.format(self.sell_out_code[index_], self.sell_out_quantity[index_])
+            else:
+                sell_out_info = ''
+            self.lineEdit_profit_investment.setText('日期:{};  盈亏率:{:4.2f}%; 投资总成本:{:4.2f} 元; 目前总资产:{:4.2f} 元;'.format((datetime.date(1, 1, 1)+datetime.timedelta(int(self.profit_dates[which]))).strftime('%Y-%m-%d'),result, cost, wealth)+buy_in_info+sell_out_info)
             self.vLine_profit_investment.setPos(mousePoint.x())
             self.hLine_profit_investment.setPos(mousePoint.y())
 
@@ -612,7 +670,7 @@ class MyMainWindow(QMainWindow):
             result_current_fund = self.profit_change_current_fund[which]
             result_similar_fund = self.profit_change_similar_fund[which]
             result_index = self.profit_change_index[which]
-            self.lineEdit_single_point_profit.setText('日期:{};   所选基金:{:4.2f}%;    同类基金:{:4.2f}%;      沪深300:{:4.2f}%;'.format((datetime.date(1, 1, 1)+datetime.timedelta(int(self.dates_current_fund[which]))).strftime('%Y-%m-%d'),result_current_fund,result_similar_fund,result_index))
+            self.lineEdit_single_point_fund.setText('日期:{};   所选基金:{:4.2f}%;    同类基金:{:4.2f}%;      沪深300:{:4.2f}%;'.format((datetime.date(1, 1, 1)+datetime.timedelta(int(self.dates_current_fund[which]))).strftime('%Y-%m-%d'),result_current_fund,result_similar_fund,result_index))
             self.vLine_profit.setPos(mousePoint.x())
             self.hLine_profit.setPos(mousePoint.y())
 

@@ -69,7 +69,7 @@ def calc_profit(fund_info, purchase_info, output_date):
     #purchase_info = {'000001':{'buy_in_date':['2021-01-01'], 'sell_out_date':['2021-02-05'],'buy_in_quantity':[10],'sell_out_quantity':[10]}}
     #output_date = '2021-04-01'
     def _later_date(date_str1, date_str2):
-        return (datetime.datetime.strptime(date_str1, "%Y-%m-%d").date()-datetime.datetime.strptime(date_str2, "%Y-%m-%d").date()).days>0
+        return (datetime.datetime.strptime(date_str1, "%Y-%m-%d").date()-datetime.datetime.strptime(date_str2, "%Y-%m-%d").date()).days>=0
     def _get_price(code, date_str):
         days = (datetime.datetime.strptime(date_str, "%Y-%m-%d").date() - datetime.date(1, 1, 1)).days
         return fund_info[code]['net_wealth'][np.argmin(np.abs(np.array(fund_info[code]['dates'])-days))]
@@ -89,6 +89,8 @@ def calc_profit(fund_info, purchase_info, output_date):
                 amount_in_hand += purchase_info[each]['sell_out_quantity'][i]*_get_price(each,purchase_info[each]['sell_out_date'][i])
     amount_in_market = sum([quantity_in_market[each]*_get_price(each, output_date) for each in quantity_in_market])
     # print(cost_total, amount_in_market, amount_in_hand)
+    if cost_total==0:
+        return 0, 0, 0
     return round((amount_in_market + amount_in_hand - cost_total)/cost_total*100,2), amount_in_market+amount_in_hand, cost_total
     
 '''

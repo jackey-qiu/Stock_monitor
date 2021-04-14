@@ -7,8 +7,14 @@
     <x>0</x>
     <y>0</y>
     <width>1920</width>
-    <height>1030</height>
+    <height>1069</height>
    </rect>
+  </property>
+  <property name="font">
+   <font>
+    <family>Kai</family>
+    <pointsize>15</pointsize>
+   </font>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
@@ -29,7 +35,7 @@
       <widget class="QFrame" name="frame">
        <property name="font">
         <font>
-         <family>KaiTi</family>
+         <family>Kai</family>
          <pointsize>11</pointsize>
         </font>
        </property>
@@ -41,22 +47,23 @@
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
-         <widget class="QLabel" name="label">
-          <property name="font">
-           <font>
-            <family>KaiTi</family>
-            <pointsize>11</pointsize>
-            <weight>50</weight>
-            <bold>false</bold>
-           </font>
-          </property>
-          <property name="text">
-           <string>大盘数据</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout">
+         <layout class="QHBoxLayout" name="horizontalLayout_17">
+          <item>
+           <widget class="QLabel" name="label">
+            <property name="font">
+             <font>
+              <family>Kai</family>
+              <pointsize>15</pointsize>
+              <weight>50</weight>
+              <bold>false</bold>
+              <underline>true</underline>
+             </font>
+            </property>
+            <property name="text">
+             <string>大盘数据</string>
+            </property>
+           </widget>
+          </item>
           <item>
            <widget class="QComboBox" name="comboBox_index_type">
             <property name="font">
@@ -88,306 +95,23 @@
            </widget>
           </item>
           <item>
-           <widget class="QLabel" name="label_2">
-            <property name="font">
-             <font>
-              <family>KaiTi</family>
-              <pointsize>11</pointsize>
-              <weight>75</weight>
-              <bold>true</bold>
-             </font>
+           <spacer name="horizontalSpacer_11">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
             </property>
-            <property name="frameShape">
-             <enum>QFrame::StyledPanel</enum>
-            </property>
-            <property name="frameShadow">
-             <enum>QFrame::Sunken</enum>
-            </property>
-            <property name="text">
-             <string>当日数据</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLabel" name="label_23">
-            <property name="font">
-             <font>
-              <family>KaiTi</family>
-              <pointsize>11</pointsize>
-             </font>
-            </property>
-            <property name="text">
-             <string>开盘价</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLineEdit" name="lineEdit_open_price">
-            <property name="maximumSize">
+            <property name="sizeHint" stdset="0">
              <size>
-              <width>100</width>
-              <height>16777215</height>
+              <width>40</width>
+              <height>20</height>
              </size>
             </property>
-            <property name="font">
-             <font>
-              <family>KaiTi</family>
-              <pointsize>11</pointsize>
-             </font>
-            </property>
-           </widget>
+           </spacer>
           </item>
-          <item>
-           <widget class="QLabel" name="label_3">
-            <property name="font">
-             <font>
-              <family>KaiTi</family>
-              <pointsize>11</pointsize>
-             </font>
-            </property>
-            <property name="text">
-             <string>收盘价</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLineEdit" name="lineEdit_close_price">
-            <property name="maximumSize">
-             <size>
-              <width>100</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="font">
-             <font>
-              <family>KaiTi</family>
-              <pointsize>11</pointsize>
-             </font>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLabel" name="label_4">
-            <property name="font">
-             <font>
-              <family>KaiTi</family>
-              <pointsize>11</pointsize>
-             </font>
-            </property>
-            <property name="text">
-             <string>极大值</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLineEdit" name="lineEdit_high_price">
-            <property name="maximumSize">
-             <size>
-              <width>100</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="font">
-             <font>
-              <family>KaiTi</family>
-              <pointsize>11</pointsize>
-             </font>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLabel" name="label_5">
-            <property name="font">
-             <font>
-              <family>KaiTi</family>
-              <pointsize>11</pointsize>
-             </font>
-            </property>
-            <property name="text">
-             <string>最低值</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLineEdit" name="lineEdit_low_price">
-            <property name="maximumSize">
-             <size>
-              <width>100</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="font">
-             <font>
-              <family>KaiTi</family>
-              <pointsize>11</pointsize>
-             </font>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLabel" name="label_6">
-            <property name="font">
-             <font>
-              <family>KaiTi</family>
-              <pointsize>11</pointsize>
-             </font>
-            </property>
-            <property name="text">
-             <string>较昨日涨跌幅</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLineEdit" name="lineEdit_change_rate">
-            <property name="maximumSize">
-             <size>
-              <width>100</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="font">
-             <font>
-              <family>KaiTi</family>
-              <pointsize>11</pointsize>
-             </font>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLabel" name="label_25">
-            <property name="font">
-             <font>
-              <family>KaiTi</family>
-              <pointsize>11</pointsize>
-             </font>
-            </property>
-            <property name="text">
-             <string>振幅</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLineEdit" name="lineEdit_amp">
-            <property name="maximumSize">
-             <size>
-              <width>100</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="font">
-             <font>
-              <family>KaiTi</family>
-              <pointsize>11</pointsize>
-             </font>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLabel" name="label_16">
-            <property name="font">
-             <font>
-              <family>KaiTi</family>
-              <pointsize>11</pointsize>
-             </font>
-            </property>
-            <property name="text">
-             <string>总市值</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLineEdit" name="lineEdit_volume">
-            <property name="maximumSize">
-             <size>
-              <width>100</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="font">
-             <font>
-              <family>KaiTi</family>
-              <pointsize>11</pointsize>
-             </font>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLabel" name="label_14">
-            <property name="font">
-             <font>
-              <family>KaiTi</family>
-              <pointsize>11</pointsize>
-             </font>
-            </property>
-            <property name="text">
-             <string>成交量</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLineEdit" name="lineEdit_amount">
-            <property name="maximumSize">
-             <size>
-              <width>100</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="font">
-             <font>
-              <family>KaiTi</family>
-              <pointsize>11</pointsize>
-             </font>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLabel" name="label_67">
-            <property name="text">
-             <string>市盈率</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLineEdit" name="lineEdit_PE">
-            <property name="maximumSize">
-             <size>
-              <width>100</width>
-              <height>16777215</height>
-             </size>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLabel" name="label_66">
-            <property name="text">
-             <string>估值历史百分位</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLineEdit" name="lineEdit">
-            <property name="maximumSize">
-             <size>
-              <width>100</width>
-              <height>16777215</height>
-             </size>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLabel" name="label_15">
-            <property name="font">
-             <font>
-              <family>KaiTi</family>
-              <pointsize>11</pointsize>
-             </font>
-            </property>
-            <property name="text">
-             <string/>
-            </property>
-           </widget>
-          </item>
-          <item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QGridLayout" name="gridLayout_3">
+          <item row="0" column="13">
            <spacer name="horizontalSpacer_4">
             <property name="font">
              <font>
@@ -406,6 +130,295 @@
             </property>
            </spacer>
           </item>
+          <item row="0" column="7">
+           <widget class="QLineEdit" name="lineEdit_low_price">
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <family>KaiTi</family>
+              <pointsize>11</pointsize>
+             </font>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_23">
+            <property name="font">
+             <font>
+              <family>KaiTi</family>
+              <pointsize>11</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>开盘价</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QLineEdit" name="lineEdit_open_price">
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <family>KaiTi</family>
+              <pointsize>11</pointsize>
+             </font>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="4">
+           <widget class="QLabel" name="label_4">
+            <property name="font">
+             <font>
+              <family>KaiTi</family>
+              <pointsize>11</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>极大值</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="3">
+           <widget class="QLineEdit" name="lineEdit_close_price">
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <family>KaiTi</family>
+              <pointsize>11</pointsize>
+             </font>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="9">
+           <widget class="QLineEdit" name="lineEdit_change_rate">
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <family>KaiTi</family>
+              <pointsize>11</pointsize>
+             </font>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="2">
+           <widget class="QLabel" name="label_3">
+            <property name="font">
+             <font>
+              <family>KaiTi</family>
+              <pointsize>11</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>收盘价</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="6">
+           <widget class="QLabel" name="label_5">
+            <property name="font">
+             <font>
+              <family>KaiTi</family>
+              <pointsize>11</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>最低值</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="5">
+           <widget class="QLineEdit" name="lineEdit_high_price">
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <family>KaiTi</family>
+              <pointsize>11</pointsize>
+             </font>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="12">
+           <widget class="QLabel" name="label_15">
+            <property name="font">
+             <font>
+              <family>KaiTi</family>
+              <pointsize>11</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="8">
+           <widget class="QLabel" name="label_6">
+            <property name="font">
+             <font>
+              <family>KaiTi</family>
+              <pointsize>11</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>较昨日涨跌幅</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_25">
+            <property name="font">
+             <font>
+              <family>KaiTi</family>
+              <pointsize>11</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>振幅</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QLineEdit" name="lineEdit_amp">
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <family>KaiTi</family>
+              <pointsize>11</pointsize>
+             </font>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="2">
+           <widget class="QLabel" name="label_16">
+            <property name="font">
+             <font>
+              <family>KaiTi</family>
+              <pointsize>11</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>总市值</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="3">
+           <widget class="QLineEdit" name="lineEdit_volume">
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <family>KaiTi</family>
+              <pointsize>11</pointsize>
+             </font>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="4">
+           <widget class="QLabel" name="label_14">
+            <property name="font">
+             <font>
+              <family>KaiTi</family>
+              <pointsize>11</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>成交量</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="5">
+           <widget class="QLineEdit" name="lineEdit_amount">
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <family>KaiTi</family>
+              <pointsize>11</pointsize>
+             </font>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="6">
+           <widget class="QLabel" name="label_67">
+            <property name="font">
+             <font>
+              <pointsize>11</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>市盈率</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="7">
+           <widget class="QLineEdit" name="lineEdit_PE">
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="8">
+           <widget class="QLabel" name="label_66">
+            <property name="font">
+             <font>
+              <pointsize>11</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>历史百分位</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="9">
+           <widget class="QLineEdit" name="lineEdit">
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+           </widget>
+          </item>
          </layout>
         </item>
         <item>
@@ -413,7 +426,10 @@
           <property name="font">
            <font>
             <family>KaiTi</family>
-            <pointsize>11</pointsize>
+            <pointsize>13</pointsize>
+            <weight>75</weight>
+            <bold>true</bold>
+            <underline>true</underline>
            </font>
           </property>
           <property name="text">
@@ -718,7 +734,7 @@
        <property name="font">
         <font>
          <family>KaiTi</family>
-         <pointsize>11</pointsize>
+         <pointsize>13</pointsize>
         </font>
        </property>
        <property name="frameShape">
@@ -732,10 +748,11 @@
          <widget class="QLabel" name="label_13">
           <property name="font">
            <font>
-            <family>KaiTi</family>
-            <pointsize>11</pointsize>
-            <weight>75</weight>
-            <bold>true</bold>
+            <family>Kai</family>
+            <pointsize>13</pointsize>
+            <weight>50</weight>
+            <bold>false</bold>
+            <underline>true</underline>
            </font>
           </property>
           <property name="text">
@@ -747,12 +764,12 @@
          <widget class="QTabWidget" name="tabWidget_2">
           <property name="font">
            <font>
-            <family>KaiTi</family>
+            <family>Arial</family>
             <pointsize>11</pointsize>
            </font>
           </property>
           <property name="currentIndex">
-           <number>2</number>
+           <number>1</number>
           </property>
           <widget class="QWidget" name="tab_3">
            <attribute name="title">
@@ -1137,6 +1154,10 @@
                 </property>
                </spacer>
               </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout">
               <item>
                <widget class="QLabel" name="label_57">
                 <property name="text">
@@ -1187,6 +1208,19 @@
                  <string>提取</string>
                 </property>
                </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_10">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
               </item>
              </layout>
             </item>
@@ -1322,21 +1356,24 @@
                 <item>
                  <widget class="QGroupBox" name="groupBox">
                   <layout class="QGridLayout" name="gridLayout">
-                   <item row="1" column="9">
-                    <widget class="QLabel" name="label_36">
+                   <item row="1" column="8">
+                    <widget class="QLineEdit" name="lineEdit_select_stock">
+                     <property name="maximumSize">
+                      <size>
+                       <width>100</width>
+                       <height>16777215</height>
+                      </size>
+                     </property>
                      <property name="font">
                       <font>
                        <family>KaiTi</family>
                        <pointsize>11</pointsize>
                       </font>
-                     </property>
-                     <property name="text">
-                      <string>稳定性</string>
                      </property>
                     </widget>
                    </item>
-                   <item row="1" column="1">
-                    <widget class="QLabel" name="label_22">
+                   <item row="2" column="7">
+                    <widget class="QLabel" name="label_34">
                      <property name="font">
                       <font>
                        <family>KaiTi</family>
@@ -1344,134 +1381,25 @@
                       </font>
                      </property>
                      <property name="text">
-                      <string>基金总规模</string>
+                      <string>收益率</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="7">
+                    <widget class="QLabel" name="label_39">
+                     <property name="font">
+                      <font>
+                       <family>KaiTi</family>
+                       <pointsize>11</pointsize>
+                      </font>
+                     </property>
+                     <property name="text">
+                      <string>选股能力</string>
                      </property>
                     </widget>
                    </item>
                    <item row="4" column="2">
                     <widget class="QLineEdit" name="lineEdit_fund_change">
-                     <property name="maximumSize">
-                      <size>
-                       <width>100</width>
-                       <height>16777215</height>
-                      </size>
-                     </property>
-                     <property name="font">
-                      <font>
-                       <family>KaiTi</family>
-                       <pointsize>11</pointsize>
-                      </font>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="3" column="2">
-                    <widget class="QLineEdit" name="lineEdit_fund_accumulate_wealth">
-                     <property name="maximumSize">
-                      <size>
-                       <width>100</width>
-                       <height>16777215</height>
-                      </size>
-                     </property>
-                     <property name="font">
-                      <font>
-                       <family>KaiTi</family>
-                       <pointsize>11</pointsize>
-                      </font>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="3" column="8">
-                    <widget class="QLineEdit" name="lineEdit_risk_resistance">
-                     <property name="maximumSize">
-                      <size>
-                       <width>100</width>
-                       <height>16777215</height>
-                      </size>
-                     </property>
-                     <property name="font">
-                      <font>
-                       <family>KaiTi</family>
-                       <pointsize>11</pointsize>
-                      </font>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="1" column="2">
-                    <widget class="QLineEdit" name="lineEdit_fund_total">
-                     <property name="maximumSize">
-                      <size>
-                       <width>100</width>
-                       <height>16777215</height>
-                      </size>
-                     </property>
-                     <property name="font">
-                      <font>
-                       <family>KaiTi</family>
-                       <pointsize>11</pointsize>
-                      </font>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="1" column="0">
-                    <widget class="QLabel" name="label_18">
-                     <property name="font">
-                      <font>
-                       <family>KaiTi</family>
-                       <pointsize>11</pointsize>
-                      </font>
-                     </property>
-                     <property name="frameShape">
-                      <enum>QFrame::StyledPanel</enum>
-                     </property>
-                     <property name="text">
-                      <string>当日数据</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="4" column="1">
-                    <widget class="QLabel" name="label_21">
-                     <property name="font">
-                      <font>
-                       <family>KaiTi</family>
-                       <pointsize>11</pointsize>
-                      </font>
-                     </property>
-                     <property name="text">
-                      <string>较昨日涨跌幅</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="2" column="8">
-                    <widget class="QLineEdit" name="lineEdit_profit">
-                     <property name="maximumSize">
-                      <size>
-                       <width>100</width>
-                       <height>16777215</height>
-                      </size>
-                     </property>
-                     <property name="font">
-                      <font>
-                       <family>KaiTi</family>
-                       <pointsize>11</pointsize>
-                      </font>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="3" column="4">
-                    <widget class="QLabel" name="label_31">
-                     <property name="font">
-                      <font>
-                       <family>KaiTi</family>
-                       <pointsize>11</pointsize>
-                      </font>
-                     </property>
-                     <property name="text">
-                      <string>近半年</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="3" column="5">
-                    <widget class="QLineEdit" name="lineEdit_profit_half_year">
                      <property name="maximumSize">
                       <size>
                        <width>100</width>
@@ -1515,6 +1443,64 @@
                      </property>
                     </widget>
                    </item>
+                   <item row="1" column="0">
+                    <widget class="QLabel" name="label_18">
+                     <property name="font">
+                      <font>
+                       <family>KaiTi</family>
+                       <pointsize>11</pointsize>
+                      </font>
+                     </property>
+                     <property name="frameShape">
+                      <enum>QFrame::StyledPanel</enum>
+                     </property>
+                     <property name="text">
+                      <string>当日数据</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="3" column="4">
+                    <widget class="QLabel" name="label_31">
+                     <property name="font">
+                      <font>
+                       <family>KaiTi</family>
+                       <pointsize>11</pointsize>
+                      </font>
+                     </property>
+                     <property name="text">
+                      <string>近半年</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="4" column="1">
+                    <widget class="QLabel" name="label_21">
+                     <property name="font">
+                      <font>
+                       <family>KaiTi</family>
+                       <pointsize>11</pointsize>
+                      </font>
+                     </property>
+                     <property name="text">
+                      <string>较昨日涨跌幅</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="2">
+                    <widget class="QLineEdit" name="lineEdit_fund_total">
+                     <property name="maximumSize">
+                      <size>
+                       <width>100</width>
+                       <height>16777215</height>
+                      </size>
+                     </property>
+                     <property name="font">
+                      <font>
+                       <family>KaiTi</family>
+                       <pointsize>11</pointsize>
+                      </font>
+                     </property>
+                    </widget>
+                   </item>
                    <item row="1" column="6">
                     <widget class="QLabel" name="label_33">
                      <property name="font">
@@ -1525,6 +1511,22 @@
                      </property>
                      <property name="text">
                       <string>业绩评价</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="3" column="2">
+                    <widget class="QLineEdit" name="lineEdit_fund_accumulate_wealth">
+                     <property name="maximumSize">
+                      <size>
+                       <width>100</width>
+                       <height>16777215</height>
+                      </size>
+                     </property>
+                     <property name="font">
+                      <font>
+                       <family>KaiTi</family>
+                       <pointsize>11</pointsize>
+                      </font>
                      </property>
                     </widget>
                    </item>
@@ -1541,6 +1543,19 @@
                      </property>
                     </widget>
                    </item>
+                   <item row="1" column="9">
+                    <widget class="QLabel" name="label_36">
+                     <property name="font">
+                      <font>
+                       <family>KaiTi</family>
+                       <pointsize>11</pointsize>
+                      </font>
+                     </property>
+                     <property name="text">
+                      <string>稳定性</string>
+                     </property>
+                    </widget>
+                   </item>
                    <item row="1" column="3">
                     <widget class="QLabel" name="label_28">
                      <property name="font">
@@ -1554,8 +1569,21 @@
                      </property>
                     </widget>
                    </item>
-                   <item row="4" column="5">
-                    <widget class="QLineEdit" name="lineEdit_profit_one_year">
+                   <item row="1" column="1">
+                    <widget class="QLabel" name="label_22">
+                     <property name="font">
+                      <font>
+                       <family>KaiTi</family>
+                       <pointsize>11</pointsize>
+                      </font>
+                     </property>
+                     <property name="text">
+                      <string>基金总规模</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="2" column="8">
+                    <widget class="QLineEdit" name="lineEdit_profit">
                      <property name="maximumSize">
                       <size>
                        <width>100</width>
@@ -1570,8 +1598,8 @@
                      </property>
                     </widget>
                    </item>
-                   <item row="1" column="5">
-                    <widget class="QLineEdit" name="lineEdit_profit_one_month">
+                   <item row="3" column="5">
+                    <widget class="QLineEdit" name="lineEdit_profit_half_year">
                      <property name="maximumSize">
                       <size>
                        <width>100</width>
@@ -1586,60 +1614,8 @@
                      </property>
                     </widget>
                    </item>
-                   <item row="2" column="4">
-                    <widget class="QLabel" name="label_30">
-                     <property name="font">
-                      <font>
-                       <family>KaiTi</family>
-                       <pointsize>11</pointsize>
-                      </font>
-                     </property>
-                     <property name="text">
-                      <string>近三月</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="3" column="7">
-                    <widget class="QLabel" name="label_35">
-                     <property name="font">
-                      <font>
-                       <family>KaiTi</family>
-                       <pointsize>11</pointsize>
-                      </font>
-                     </property>
-                     <property name="text">
-                      <string>抗风险</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="1" column="7">
-                    <widget class="QLabel" name="label_39">
-                     <property name="font">
-                      <font>
-                       <family>KaiTi</family>
-                       <pointsize>11</pointsize>
-                      </font>
-                     </property>
-                     <property name="text">
-                      <string>选股能力</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="2" column="7">
-                    <widget class="QLabel" name="label_34">
-                     <property name="font">
-                      <font>
-                       <family>KaiTi</family>
-                       <pointsize>11</pointsize>
-                      </font>
-                     </property>
-                     <property name="text">
-                      <string>收益率</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="1" column="8">
-                    <widget class="QLineEdit" name="lineEdit_select_stock">
+                   <item row="2" column="10">
+                    <widget class="QLineEdit" name="lineEdit_timing">
                      <property name="maximumSize">
                       <size>
                        <width>100</width>
@@ -1667,8 +1643,8 @@
                      </property>
                     </widget>
                    </item>
-                   <item row="3" column="1">
-                    <widget class="QLabel" name="label_20">
+                   <item row="2" column="4">
+                    <widget class="QLabel" name="label_30">
                      <property name="font">
                       <font>
                        <family>KaiTi</family>
@@ -1676,11 +1652,40 @@
                       </font>
                      </property>
                      <property name="text">
-                      <string>累计净值</string>
+                      <string>近三月</string>
                      </property>
                     </widget>
                    </item>
-                   <item row="2" column="11">
+                   <item row="2" column="9">
+                    <widget class="QLabel" name="label_37">
+                     <property name="font">
+                      <font>
+                       <family>KaiTi</family>
+                       <pointsize>11</pointsize>
+                      </font>
+                     </property>
+                     <property name="text">
+                      <string>择时能力</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="5">
+                    <widget class="QLineEdit" name="lineEdit_profit_one_month">
+                     <property name="maximumSize">
+                      <size>
+                       <width>100</width>
+                       <height>16777215</height>
+                      </size>
+                     </property>
+                     <property name="font">
+                      <font>
+                       <family>KaiTi</family>
+                       <pointsize>11</pointsize>
+                      </font>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="2" column="13">
                     <spacer name="horizontalSpacer_3">
                      <property name="font">
                       <font>
@@ -1699,8 +1704,8 @@
                      </property>
                     </spacer>
                    </item>
-                   <item row="2" column="2">
-                    <widget class="QLineEdit" name="lineEdit_fund_net_wealth">
+                   <item row="4" column="5">
+                    <widget class="QLineEdit" name="lineEdit_profit_one_year">
                      <property name="maximumSize">
                       <size>
                        <width>100</width>
@@ -1712,6 +1717,19 @@
                        <family>KaiTi</family>
                        <pointsize>11</pointsize>
                       </font>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="3" column="1">
+                    <widget class="QLabel" name="label_20">
+                     <property name="font">
+                      <font>
+                       <family>KaiTi</family>
+                       <pointsize>11</pointsize>
+                      </font>
+                     </property>
+                     <property name="text">
+                      <string>累计净值</string>
                      </property>
                     </widget>
                    </item>
@@ -1731,21 +1749,8 @@
                      </property>
                     </widget>
                    </item>
-                   <item row="2" column="9">
-                    <widget class="QLabel" name="label_37">
-                     <property name="font">
-                      <font>
-                       <family>KaiTi</family>
-                       <pointsize>11</pointsize>
-                      </font>
-                     </property>
-                     <property name="text">
-                      <string>择时能力</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="2" column="10">
-                    <widget class="QLineEdit" name="lineEdit_timing">
+                   <item row="2" column="2">
+                    <widget class="QLineEdit" name="lineEdit_fund_net_wealth">
                      <property name="maximumSize">
                       <size>
                        <width>100</width>
@@ -1760,7 +1765,36 @@
                      </property>
                     </widget>
                    </item>
-                   <item row="3" column="9">
+                   <item row="1" column="11">
+                    <widget class="QLabel" name="label_35">
+                     <property name="font">
+                      <font>
+                       <family>KaiTi</family>
+                       <pointsize>11</pointsize>
+                      </font>
+                     </property>
+                     <property name="text">
+                      <string>抗风险</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="12">
+                    <widget class="QLineEdit" name="lineEdit_risk_resistance">
+                     <property name="maximumSize">
+                      <size>
+                       <width>100</width>
+                       <height>16777215</height>
+                      </size>
+                     </property>
+                     <property name="font">
+                      <font>
+                       <family>KaiTi</family>
+                       <pointsize>11</pointsize>
+                      </font>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="2" column="11">
                     <widget class="QLabel" name="label_38">
                      <property name="font">
                       <font>
@@ -1773,7 +1807,7 @@
                      </property>
                     </widget>
                    </item>
-                   <item row="3" column="10">
+                   <item row="2" column="12">
                     <widget class="QLineEdit" name="lineEdit_avg">
                      <property name="maximumSize">
                       <size>
@@ -2227,7 +2261,7 @@
               </widget>
               <widget class="QWidget" name="tab">
                <attribute name="title">
-                <string>净值波动图</string>
+                <string>基金波动图</string>
                </attribute>
                <layout class="QVBoxLayout" name="verticalLayout_6">
                 <item>
@@ -2253,54 +2287,6 @@
                    </font>
                   </property>
                  </widget>
-                </item>
-               </layout>
-              </widget>
-              <widget class="QWidget" name="tab_2">
-               <attribute name="title">
-                <string>排名走势</string>
-               </attribute>
-               <layout class="QVBoxLayout" name="verticalLayout_10">
-                <item>
-                 <layout class="QHBoxLayout" name="horizontalLayout_12">
-                  <item>
-                   <widget class="QLabel" name="label_60">
-                    <property name="text">
-                     <string>单点信息</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLineEdit" name="lineEdit_single_point_rank"/>
-                  </item>
-                 </layout>
-                </item>
-                <item>
-                 <widget class="GraphicsLayoutWidget" name="widget_rank" native="true"/>
-                </item>
-               </layout>
-              </widget>
-              <widget class="QWidget" name="tab_8">
-               <attribute name="title">
-                <string>收益走势</string>
-               </attribute>
-               <layout class="QVBoxLayout" name="verticalLayout_11">
-                <item>
-                 <layout class="QHBoxLayout" name="horizontalLayout_11">
-                  <item>
-                   <widget class="QLabel" name="label_61">
-                    <property name="text">
-                     <string>单点信息</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLineEdit" name="lineEdit_single_point_profit"/>
-                  </item>
-                 </layout>
-                </item>
-                <item>
-                 <widget class="GraphicsLayoutWidget" name="widget_profit" native="true"/>
                 </item>
                </layout>
               </widget>
@@ -2453,7 +2439,13 @@
            </attribute>
            <layout class="QVBoxLayout" name="verticalLayout_5">
             <item>
-             <widget class="TerminalWidget" name="widget_terminal" native="true"/>
+             <widget class="TerminalWidget" name="widget_terminal" native="true">
+              <property name="font">
+               <font>
+                <family>Arial</family>
+               </font>
+              </property>
+             </widget>
             </item>
            </layout>
           </widget>
