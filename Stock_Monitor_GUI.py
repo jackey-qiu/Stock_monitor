@@ -66,9 +66,13 @@ class PandasModel(QtCore.QAbstractTableModel):
             if role in [QtCore.Qt.DisplayRole, QtCore.Qt.EditRole] and index.column()!=0:
                 return str(self._data.iloc[index.row(), index.column()])
             if role == QtCore.Qt.BackgroundRole and index.row()%2 == 0:
-                return QtGui.QColor('lightGray')
+                #return QtGui.QColor('lightGray')
+                return QtGui.QColor('green')
             if role == QtCore.Qt.BackgroundRole and index.row()%2 == 1:
-                return QtGui.QColor('cyan')
+                # return QtGui.QColor('cyan')
+                return QtGui.QColor('lightGreen')
+            if role == QtCore.Qt.ForegroundRole and index.row()%2 == 1:
+                return QtGui.QColor('black')
             if role == QtCore.Qt.CheckStateRole and index.column()==0:
                 if self._data.iloc[index.row(),index.column()]:
                     return QtCore.Qt.Checked
@@ -198,7 +202,8 @@ class MyMainWindow(QMainWindow):
         data['选择'] = data['选择'].astype(bool)
         data.sort_values(by=['基金代码','购入日期'], inplace = True)
         if not hasattr(self, 'pandas_model_fund_group'):
-            self.pandas_model_fund_group = PandasModel(data = data,tableviewer = self.tableView_fund_group_list, parent=self) 
+            cols = ['选择','基金代码','基金简称','购入日期','购入数量','卖出日期','卖出数量']
+            self.pandas_model_fund_group = PandasModel(data = data[cols],tableviewer = self.tableView_fund_group_list, parent=self) 
             self.tableView_fund_group_list.setModel(self.pandas_model_fund_group)
             self.tableView_fund_group_list.resizeColumnsToContents() 
         else:
@@ -262,7 +267,13 @@ class MyMainWindow(QMainWindow):
             return buy_in_dates, sell_out_dates, buy_in_code, sell_out_code, buy_in_quantity, sell_out_quantity
         
         def _plot_multiple_funds(buy_in_dates, buy_in_code, fund_info, ax_handle):
+            fund_profiles = []
+            fund_points = []
             ax_handle.addLegend()
+            if self.checkBox_profit_rate.isChecked():
+                ax_handle.getAxis('left').setLabel('收益率(%)')
+            else:
+                ax_handle.getAxis('left').setLabel('单位净值（元）')
             buy_in_dates_unique = []
             buy_in_code_unique = []
             for i, item in enumerate(buy_in_dates):
@@ -278,8 +289,12 @@ class MyMainWindow(QMainWindow):
             fund_info_partial = {}
             for each in fund_info:
                 begin_index = np.argmin(abs(np.array(fund_info[each]['dates'])-buy_in_dates_unique[buy_in_code_unique.index(each)]))
-                fund_info_partial[each] = {'dates':fund_info[each]['dates'][begin_index:],
-                                          'net_wealth':(np.array(fund_info[each]['net_wealth'][begin_index:])-fund_info[each]['net_wealth'][begin_index])/fund_info[each]['net_wealth'][begin_index]*100}
+                if self.checkBox_profit_rate.isChecked():
+                    fund_info_partial[each] = {'dates':fund_info[each]['dates'][begin_index:],
+                                               'net_wealth':(np.array(fund_info[each]['net_wealth'][begin_index:])-fund_info[each]['net_wealth'][begin_index])/fund_info[each]['net_wealth'][begin_index]*100}
+                else:
+                    fund_info_partial[each] = {'dates':fund_info[each]['dates'][begin_index:],
+                                               'net_wealth':fund_info[each]['net_wealth'][begin_index:]}
             
             colors = [(200,0,0),(0,128,0),(19,234,201),(195,46,212),(250,194,5),(54,55,55),(0,114,189),(217,83,25),(237,177,32),(126,47,142)]
             linestyles = [None, QtCore.Qt.DotLine, QtCore.Qt.DashLine]
@@ -290,6 +305,8 @@ class MyMainWindow(QMainWindow):
                         pens.append(pg.mkPen(color=color))
                     else:
                         pens.append(pg.mkPen(color=color, style=ls))
+            begin_date = 1000000000000000000000000
+            end_date = 0
             for each in fund_info_partial:
                 i = list(fund_info_partial.keys()).index(each)
                 if i>=30:
@@ -297,7 +314,19 @@ class MyMainWindow(QMainWindow):
                 else:
                     pen = pens[i]
                 x, y = fund_info_partial[each]['dates'], fund_info_partial[each]['net_wealth']
-                ax_handle.plot(x, y, pen = pen, name = each)
+                code_name = self.pandas_model_fund_group._data[self.pandas_model_fund_group._data['基金代码']==each].iloc[0,2]
+                fund_profiles.append(ax_handle.plot(x, y, pen = pen))
+                fund_points.append(ax_handle.plot(x[0:1], y[0:1], pen = None, symbolBrush = pen.color().getRgb(), symbolPen='w', symbol='o', symbolSize=8, name = code_name))
+
+                if x[0]<begin_date:
+                    begin_date = x[0]
+                if x[-1]>end_date:
+                    end_date = x[-1]
+            #plotting baseline
+            #print(begin_date, end_date)
+            if self.checkBox_profit_rate.isChecked():
+                ax_handle.plot([begin_date, end_date], [0,0],  pen = pg.mkPen(color=(200,200,200), style = QtCore.Qt.DotLine, width = 2))
+            return fund_profiles, fund_points
 
         profits = []
         total_investment = []
@@ -305,7 +334,8 @@ class MyMainWindow(QMainWindow):
         purchase_info = {}
         date_start = datetime.date.today()
         date_end = datetime.date.today()
-        fund_info = data_extractor.extract_multiple_funds(list(set(self.pandas_model_fund_group._data['基金代码'].tolist())))
+        chosen_index = self.pandas_model_fund_group._data['选择']
+        fund_info = data_extractor.extract_multiple_funds(list(set(self.pandas_model_fund_group._data[chosen_index]['基金代码'].tolist())))
         for i in range(len(self.pandas_model_fund_group._data)):
             if self.pandas_model_fund_group._data.iloc[i]['选择']:
                 temp_dates = eval(self.pandas_model_fund_group._data.iloc[i]['购入日期'])
@@ -366,7 +396,7 @@ class MyMainWindow(QMainWindow):
                 self.sell_out_code.append(sell_out_code[i])
                 self.sell_out_quantity.append(sell_out_quantity[i])
         self.ax_profit.addLegend()
-        self.ax_profit_movable = self.ax_profit.plot(self.buy_in_dates[0:1], self.profits_buy_in[0:], pen=None, symbolBrush=(200,200,0), symbolPen='w', symbol='o', symbolSize=10)
+        self.ax_profit_movable = self.ax_profit.plot(self.buy_in_dates[0:1], self.profits_buy_in[0:1], pen=None, symbolBrush=(200,200,0), symbolPen='w', symbol='o', symbolSize=10)
         self.ax_profit.plot(self.buy_in_dates, self.profits_buy_in, pen=None, symbolBrush=(200,0,0), symbolPen='w', symbol='arrow_up', symbolSize=40, name = '买入')
         self.ax_profit.plot(self.sell_out_dates, self.profits_sell_out, pen=None, symbolBrush=(0, 0,200), symbolPen='w', symbol='arrow_down', symbolSize=40, name = '卖出')
         self.set_tick_strings_general(dates = self.profit_dates, ax_handles = [self.ax_profit.getAxis('bottom')], ticks_num = 6)
@@ -389,7 +419,17 @@ class MyMainWindow(QMainWindow):
 
         self.widget_fund_groups.clear()
         self.ax_fund_group_comp = self.widget_fund_groups.addPlot(clear = True)
-        _plot_multiple_funds(self.buy_in_dates, self.buy_in_code, fund_info, self.ax_fund_group_comp)
+        self.vLine_profit_fund_group = pg.InfiniteLine(angle=90, movable=False)
+        self.hLine_profit_fund_group = pg.InfiniteLine(angle=0, movable=False)
+        self.ax_fund_group_comp.addItem(self.vLine_profit_fund_group, ignoreBounds = True)
+        self.ax_fund_group_comp.addItem(self.hLine_profit_fund_group, ignoreBounds = True)
+        self.proxy_fund_group_comp = pg.SignalProxy(self.ax_fund_group_comp.scene().sigMouseMoved, rateLimit=60, slot=self.mouseMoved_fund_group)
+        axs_fund_group = _plot_multiple_funds(self.buy_in_dates, self.buy_in_code, fund_info, self.ax_fund_group_comp)
+        # print(axs_fund_group)
+        self.ax_fund_profiles, self.ax_fund_points = axs_fund_group
+        # _plot_multiple_funds(self.buy_in_dates, self.buy_in_code, fund_info, self.ax_fund_group_comp)
+        self._format_axis([self.ax_fund_group_comp])
+        self.ax_fund_group_comp.getAxis('bottom').setLabel('日期（年-月-日）')
         self.set_tick_strings_general(dates = self.profit_dates, ax_handles = [self.ax_fund_group_comp.getAxis('bottom')], ticks_num = 6)
         self.ax_fund_group_comp.sigXRangeChanged.connect(lambda:self.set_tick_strings_general(dates = self.profit_dates, ax_handles = [self.ax_fund_group_comp.getAxis('bottom')], ticks_num = 6))
 
@@ -586,13 +626,13 @@ class MyMainWindow(QMainWindow):
 
     def setup_plot(self):
         self.mplwidget_dapan.clear()
-        self.lr = pg.LinearRegionItem()
-        self.lr.setZValue(-10)
-        self.ax_dapan = self.mplwidget_dapan.addPlot(clear = True)
+        # self.lr = pg.LinearRegionItem()
+        # self.lr.setZValue(-10)
+        # self.ax_dapan = self.mplwidget_dapan.addPlot(clear = True)
         self.ax_dapan_zoomin = self.mplwidget_dapan.addPlot(clear = True)
-        self.lr.sigRegionChanged.connect(self._updatePlot)
-        self.ax_dapan_zoomin.sigXRangeChanged.connect(self._updateRegion)
-        self.ax_dapan.addItem(self.lr)
+        # self.lr.sigRegionChanged.connect(self._updatePlot)
+        # self.ax_dapan_zoomin.sigXRangeChanged.connect(self._updateRegion)
+        # self.ax_dapan.addItem(self.lr)
         self.vLine = pg.InfiniteLine(angle=90, movable=False)
         self.hLine = pg.InfiniteLine(angle=0, movable=False)
         self.ax_dapan_zoomin.addItem(self.vLine, ignoreBounds=True)
@@ -600,7 +640,7 @@ class MyMainWindow(QMainWindow):
         self.label = pg.LabelItem(justify='right')
         # self.ax_dapan_zoomin.addItem(self.label)
         self.proxy = pg.SignalProxy(self.ax_dapan_zoomin.scene().sigMouseMoved, rateLimit=60, slot=self.mouseMoved)
-        self.ax_dapan.sigXRangeChanged.connect(self.set_tick_strings_dapan)
+        # self.ax_dapan.sigXRangeChanged.connect(self.set_tick_strings_dapan)
         self.ax_dapan_zoomin.sigXRangeChanged.connect(self.set_tick_strings_dapan)
 
     def setup_plot_fund(self):
@@ -675,6 +715,26 @@ class MyMainWindow(QMainWindow):
             self.lineEdit_single_point_fund.setText('日期:{};   同类排名百分比:{:4.2f}%;'.format((datetime.date(1, 1, 1)+datetime.timedelta(int(self.dates_rank_fund[which]))).strftime('%Y-%m-%d'),result))
             self.vLine_rank_fund.setPos(mousePoint.x())
             self.hLine_rank_fund.setPos(mousePoint.y())
+
+    def mouseMoved_fund_group(self,evt):
+        pos = evt[0]  ## using signal proxy turns original arguments into a tuple
+        if self.ax_fund_group_comp.sceneBoundingRect().contains(pos):
+            mousePoint = self.ax_fund_group_comp.vb.mapSceneToView(pos)
+            index = int(mousePoint.x())
+            #which = np.argmin(abs(np.array(self.dates_rank_fund)-index))
+            #result = self.percent_rank_fund[which]
+            #self.lineEdit_single_point_fund.setText('日期:{};   同类排名百分比:{:4.2f}%;'.format((datetime.date(1, 1, 1)+datetime.timedelta(int(self.dates_rank_fund[which]))).strftime('%Y-%m-%d'),result))
+            for i, item in enumerate(self.ax_fund_profiles):
+                which = np.argmin(abs(item.xData-index))
+                if abs(item.xData[which]-index)<2:
+                    result = item.yData[which]
+                else:
+                    result = 0
+                #print(which, result)
+                self.ax_fund_points[i].setData(x=[item.xData[which]],y=[result])
+                self.ax_fund_group_comp.legend.items[i][1].setText(self.ax_fund_points[i].name().rsplit(':')[0]+':'+str(round(result,2))+['元','%'][int(self.checkBox_profit_rate.isChecked())])
+            self.vLine_profit_fund_group.setPos(mousePoint.x())
+            self.hLine_profit_fund_group.setPos(mousePoint.y())
 
     def mouseMoved_profit_investment(self,evt):
         pos = evt[0]  ## using signal proxy turns original arguments into a tuple
@@ -756,10 +816,11 @@ class MyMainWindow(QMainWindow):
             setattr(self,'values_{}'.format(code),data_extractor.extract_all_records(code))
             self.set_current_price(code)
         values = data_extractor.extract_index_data(code, start, end, getattr(self,'values_{}'.format(code)))
+        # self.pe_values_specified = data_extractor.extract_pe_data(code, start, end)
         self.values_specified = values
-        item = CandlestickItem(values)
+        # item = CandlestickItem(values)
         item2 = CandlestickItem(values)
-        self.ax_dapan.addItem(item)
+        # self.ax_dapan.addItem(item)
         self.ax_dapan_zoomin.addItem(item2)
         self.set_tick_strings_dapan()
 
@@ -772,7 +833,7 @@ class MyMainWindow(QMainWindow):
             return list(set(values_return))
 
         ticks_num = 6
-        range_dapan = self.ax_dapan.getAxis('bottom').range
+        range_dapan = self.ax_dapan_zoomin.getAxis('bottom').range
         range_dapan_zoomin = self.ax_dapan_zoomin.getAxis('bottom').range
         dates_raw_dapan = [range_dapan[0] + (range_dapan[1] - range_dapan[0])/ticks_num*i for i in range(ticks_num)]
         dates_raw_dapan_zoomin = [range_dapan_zoomin[0] + (range_dapan_zoomin[1] - range_dapan_zoomin[0])/ticks_num*i for i in range(ticks_num)]
@@ -783,7 +844,7 @@ class MyMainWindow(QMainWindow):
         
         ticks_dapan = [(each, (datetime.date(1, 1, 1)+datetime.timedelta(each)).strftime('%y-%m-%d')) for each in dates_final_dapan]
         ticks_dapan_zoomin = [(each, (datetime.date(1, 1, 1)+datetime.timedelta(each)).strftime('%y-%m-%d')) for each in dates_final_dapan_zoomin]
-        self.ax_dapan.getAxis('bottom').setTicks([ticks_dapan])
+        # self.ax_dapan.getAxis('bottom').setTicks([ticks_dapan])
         self.ax_dapan_zoomin.getAxis('bottom').setTicks([ticks_dapan_zoomin])
 
     def set_tick_strings_general(self, dates, ax_handles, ticks_num = 6):
@@ -827,6 +888,6 @@ if __name__ == "__main__":
     QApplication.setStyle("windows")
     app = QApplication(sys.argv)
     myWin = MyMainWindow()
-    # app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     myWin.show()
     sys.exit(app.exec_())

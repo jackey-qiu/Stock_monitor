@@ -11,6 +11,7 @@ from bs4 import BeautifulSoup
 #import ray
 import psutil
 import akshare as ak
+import baostock as bs
 
 #ray.init(num_cpus = psutil.cpu_count(logical=False))
 
@@ -34,6 +35,20 @@ def extract_index_data(code, start, end, results = []):
     data_in_target = results[(results['date']<=pd.Timestamp(end)) & (results['date']>=pd.Timestamp(start))]
     data_in_target['date'] = data_in_target['date'].apply(lambda x: (x.date()-datetime.date(1, 1, 1)).days)
     return data_in_target[['date','open_price','close_price','low_price','high_price','trancaction','total','rate','amp']]
+
+#this only work for a specific stock code
+def extract_pe_data(code, start, end):
+    def _convert_date(date_str):
+        return (datetime.datetime.strptime(date_str, '%Y-%m-%d').date() - datetime.date(1, 1, 1)).days
+    lg = bs.login()
+    rs = bs.query_history_k_data("sh."+code,"date,peTTM",start_date=start, end_date=end,frequency="d", adjustflag="3")
+    data_list = []
+    while (rs.error_code == '0') & rs.next():
+        data_list.append(rs.get_row_data()) 
+    result = pd.DataFrame(data_list, columns=rs.fields)
+    # result['peTTM'].apply(float)
+    # result['date'].apply(_convert_date)
+    return result
 
 #[...['000002', 'HXCZHH', '华夏成长混合(后端)', '混合型', 'HUAXIACHENGZHANGHUNHE']...]
 def extract_all_fund_codes():

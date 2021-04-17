@@ -2405,6 +2405,16 @@
                     </property>
                    </widget>
                   </item>
+                  <item>
+                   <widget class="QCheckBox" name="checkBox_profit_rate">
+                    <property name="text">
+                     <string>收益率%</string>
+                    </property>
+                    <property name="checked">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
+                  </item>
                  </layout>
                 </item>
                </layout>
@@ -2420,7 +2430,7 @@
                 <item>
                  <widget class="QTabWidget" name="tabWidget_3">
                   <property name="currentIndex">
-                   <number>0</number>
+                   <number>1</number>
                   </property>
                   <widget class="QWidget" name="tab_2">
                    <attribute name="title">
