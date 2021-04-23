@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -14,8 +15,26 @@ import akshare as ak
 import baostock as bs
 
 #ray.init(num_cpus = psutil.cpu_count(logical=False))
+pe_name_map = {
+            '沪深300市盈率'	:'000300.XSHG',
+            '上证50市盈率':	'000016.XSHG',
+            '上证180市盈率'	:'000010.XSHG',
+            '上证380市盈率'	:'000009.XSHG',
+            '中证流通市盈率':'000902.XSHG',
+            '中证100市盈率'	:'000903.XSHG',
+            '中证500市盈率'	:'000905.XSHG',
+            '中证800市盈率'	:'000906.XSHG',
+            '中证1000市盈率':'000852.XSHG',
+            '上证A股市盈率'	:'sh',
+            '深圳A股市盈率'	:'sz',
+            '中小板市盈率':	'zx',
+            '创业板市盈率':	'cy',
+            '科创板市盈率':	'kc',
+            '全部A股市盈率':'all'
+            }
 
-index_code_map = {'上证指数':'000001','上证50':'000016','沪深300':'000300','科创50':'000688'}
+index_code_map = {'上证指数':'sh000001','上证50':'sh000016','沪深300':'sh000300','科创50':'sh000688'}
+index_code_map2 = {'上证指数':'000001','上证50':'000016','沪深300':'000300','科创50':'000688'}
 url_template = 'http://push2his.eastmoney.com/api/qt/stock/kline/get?cb=jQuery1124034703156772714716_1606741623783&secid=1.{}&ut=fa5fd1943c7b386f172d6893dbfba10b&fields1=f1%2Cf2%2Cf3%2Cf4%2Cf5&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56%2Cf57%2Cf58&klt=101&fqt=0&beg=19900101&end=20220101&_=1606741623987'
 
 def extract_all_records(code):
@@ -29,6 +48,49 @@ def extract_all_records(code):
     results['rate'] = pd.Series([0]).append(pd.Series((results['close_price'].iloc[1:].values-results['close_price'].iloc[0:-1].values)/results['close_price'].iloc[0:-1].values)).values*100
     return results
 
+def extract_index_records(code='sh000016', start=None, end=None):
+    #code should start with 'sh' or  'sz'
+    result = ak.stock_zh_index_daily(symbol=code)
+    result['date'] = result.index
+    result = result[['date','open','close','high','low','volume']]
+    result['total'] = 'NaN'
+    result['amp'] = 'NaN'
+    result.columns = ['date','open_price','close_price','high_price','low_price','trancaction','total','amp']
+    result['rate'] = pd.Series([0]).append(pd.Series((result['close_price'].iloc[1:].values-result['close_price'].iloc[0:-1].values)/result['close_price'].iloc[0:-1].values)).values*100
+    if start==None and end==None:
+        data_in_target = result
+    else:
+        data_in_target = result[(result['date']<=pd.Timestamp(end)) & (result['date']>=pd.Timestamp(start))]
+    data_in_target['date'] = data_in_target['date'].apply(lambda x: (x.date()-datetime.date(1, 1, 1)).days)
+    data_in_target.index = data_in_target.index.rename('')
+    data_in_target = data_in_target.reset_index()
+    return data_in_target[['date','open_price','close_price','low_price','high_price','trancaction','total','rate','amp']]
+
+#ak.stock_a_lg_indicator(stock="all")获取股票代码
+#identifier = 'a' means A-stock(eg. sh600000), 'hk' means Hongkong-stock(eg 00700), 'us' means US-stock (eg. "AAPL")
+def extract_stock_records(code='sh600000', start=None, end =None,adjust = 'qfq', identifier = 'a'):
+    #qfq:前复权, hfq:后复权
+    if identifier == 'a':
+        result = ak.stock_zh_a_daily(symbol=code, adjust=adjust)
+    elif identifier == 'hk':
+        result = ak.stock_hk_daily(symbol=code, adjust=adjust)
+    elif identifier == 'us':
+        result = ak.stock_us_daily(symbol=code, adjust=adjust)
+    result['date'] = result.index
+    result = result[['date','open','close','high','low','volume']]
+    result['total'] = 'NaN'
+    result['amp'] = 'NaN'
+    result.columns = ['date','open_price','close_price','high_price','low_price','trancaction','total','amp']
+    result['rate'] = pd.Series([0]).append(pd.Series((result['close_price'].iloc[1:].values-result['close_price'].iloc[0:-1].values)/result['close_price'].iloc[0:-1].values)).values*100
+    if start==None and end==None:
+        pass
+    else:
+        result = result[(result['date']<=pd.Timestamp(end)) & (result['date']>=pd.Timestamp(start))]
+    result['date'] = result['date'].apply(lambda x: (x.date()-datetime.date(1, 1, 1)).days)
+    result.index = result.index.rename('')
+    result = result.reset_index()
+    return result[['date','open_price','close_price','low_price','high_price','trancaction','total','rate','amp']]
+
 def extract_index_data(code, start, end, results = []):
     if len(results)==0:
         results = extract_all_records(code)
@@ -36,19 +98,40 @@ def extract_index_data(code, start, end, results = []):
     data_in_target['date'] = data_in_target['date'].apply(lambda x: (x.date()-datetime.date(1, 1, 1)).days)
     return data_in_target[['date','open_price','close_price','low_price','high_price','trancaction','total','rate','amp']]
 
-#this only work for a specific stock code
-def extract_pe_data(code, start, end):
+#the code is one of the value in the pe_name_map
+def extract_index_pe_data(code='000300.XSHG', start=None, end=None, script_path = ''):
     def _convert_date(date_str):
         return (datetime.datetime.strptime(date_str, '%Y-%m-%d').date() - datetime.date(1, 1, 1)).days
+    path = os.path.join(script_path, 'pe_data', list(pe_name_map.keys())[list(pe_name_map.values()).index(code)]+'.csv')
+    try:
+        data = ak.stock_a_pe(market=code)
+        data.to_csv(path)
+        print('pe data have been updated successfully!')
+    except:
+        print('Could not update the pe data from server, use the old data instead!')
+    data = pd.read_csv(path)
+    data['date'] = data['date'].apply(pd.Timestamp)
+    if start==None and end==None:
+        data_sub = data
+    else:
+        data_sub = data[(data['date']>=pd.Timestamp(start)) & (data['date']<=pd.Timestamp(end))]
+    data_sub['date'] = data_sub['date'].apply(lambda x:x.strftime('%Y-%m-%d'))
+    data_sub['date'] = data_sub['date'].apply(_convert_date)
+    if 'averagePETTM' in data_sub.columns:
+        return data_sub[['date','averagePETTM']]
+    else:
+        return data_sub[['date','pe']]
+
+    '''
     lg = bs.login()
     rs = bs.query_history_k_data("sh."+code,"date,peTTM",start_date=start, end_date=end,frequency="d", adjustflag="3")
     data_list = []
     while (rs.error_code == '0') & rs.next():
         data_list.append(rs.get_row_data()) 
     result = pd.DataFrame(data_list, columns=rs.fields)
-    # result['peTTM'].apply(float)
-    # result['date'].apply(_convert_date)
-    return result
+    '''
+
+    # return result
 
 #[...['000002', 'HXCZHH', '华夏成长混合(后端)', '混合型', 'HUAXIACHENGZHANGHUNHE']...]
 def extract_all_fund_codes():

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1920</width>
-    <height>1069</height>
+    <height>1074</height>
    </rect>
   </property>
   <property name="font">
@@ -60,7 +60,7 @@
              </font>
             </property>
             <property name="text">
-             <string>大盘数据</string>
+             <string>股指数据</string>
             </property>
            </widget>
           </item>
@@ -90,6 +90,146 @@
             <item>
              <property name="text">
               <string>科创50</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_2">
+            <property name="text">
+             <string>股指代码</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="lineEdit_index_code">
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_61">
+            <property name="text">
+             <string>指数名称</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="lineEdit_index_name">
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="radioButton_show_index">
+            <property name="text">
+             <string>显示股指</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="radioButton_show_stock">
+            <property name="text">
+             <string>显示个股</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_60">
+            <property name="text">
+             <string>股票代码</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="lineEdit_stock_code">
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>00700</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_64">
+            <property name="text">
+             <string>股票名称</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="lineEdit_stock_name">
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_69">
+            <property name="text">
+             <string>上市地点</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QComboBox" name="comboBox_listing_location">
+            <item>
+             <property name="text">
+              <string>港股</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>A股</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>美股</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_71">
+            <property name="text">
+             <string>复权</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QComboBox" name="comboBox_reinstatement">
+            <item>
+             <property name="text">
+              <string>前复权</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>不复权</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>后复权</string>
              </property>
             </item>
            </widget>
@@ -702,6 +842,92 @@
               <pointsize>11</pointsize>
              </font>
             </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_70">
+            <property name="text">
+             <string>叠加市盈率</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QComboBox" name="comboBox_index_type_for_pe">
+            <item>
+             <property name="text">
+              <string>沪深300</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>上证50</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>上证180</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>上证380</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>中证流通</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>中证100</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>中证500</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>中证800</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>中证1000</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>上证A股</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>深圳A股</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>中小板</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>创业板</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>科创板</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>全部A股</string>
+             </property>
+            </item>
            </widget>
           </item>
          </layout>

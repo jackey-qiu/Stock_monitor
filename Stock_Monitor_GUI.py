@@ -164,14 +164,14 @@ class MyMainWindow(QMainWindow):
         self.widget_terminal.update_name_space('main_gui',self)
         # self.addToolBar(self.mplwidget.navi_toolbar)
         self.setWindowTitle('Chinese Stock Monitor')
-        self.pushButton_extract_1.clicked.connect(lambda:self.plot_dapan_profile(code = data_extractor.index_code_map[self.comboBox_index_type.currentText()], start = (datetime.datetime.today()-datetime.timedelta(365*self.spinBox_previous_years.value())).strftime('%Y-%m-%d'), end = datetime.datetime.today().strftime('%Y-%m-%d')))
-        self.pushButton_exract_2.clicked.connect(lambda:self.plot_dapan_profile(code = data_extractor.index_code_map[self.comboBox_index_type.currentText()], start = self.lineEdit_begin_date.text(), end = self.lineEdit_end_date.text()))
+        self.pushButton_extract_1.clicked.connect(lambda:self.plot_dapan_profile(start = (datetime.datetime.today()-datetime.timedelta(365*self.spinBox_previous_years.value())).strftime('%Y-%m-%d'), end = datetime.datetime.today().strftime('%Y-%m-%d')))
+        self.pushButton_exract_2.clicked.connect(lambda:self.plot_dapan_profile(start = self.lineEdit_begin_date.text(), end = self.lineEdit_end_date.text()))
         self.comboBox_index_type.currentTextChanged.connect(self.extract_selected_index)
-        self.pushButton_last_week.clicked.connect(lambda:self.plot_dapan_profile(code = data_extractor.index_code_map[self.comboBox_index_type.currentText()], start = (datetime.datetime.today()-datetime.timedelta(7)).strftime('%Y-%m-%d'), end = datetime.datetime.today().strftime('%Y-%m-%d')))
-        self.pushButton_last_month.clicked.connect(lambda:self.plot_dapan_profile(code = data_extractor.index_code_map[self.comboBox_index_type.currentText()], start = (datetime.datetime.today()-datetime.timedelta(30)).strftime('%Y-%m-%d'), end = datetime.datetime.today().strftime('%Y-%m-%d')))
-        self.pushButton_last_three_month.clicked.connect(lambda:self.plot_dapan_profile(code = data_extractor.index_code_map[self.comboBox_index_type.currentText()], start = (datetime.datetime.today()-datetime.timedelta(90)).strftime('%Y-%m-%d'), end = datetime.datetime.today().strftime('%Y-%m-%d')))
-        self.pushButton_last_six_month.clicked.connect(lambda:self.plot_dapan_profile(code = data_extractor.index_code_map[self.comboBox_index_type.currentText()], start = (datetime.datetime.today()-datetime.timedelta(183)).strftime('%Y-%m-%d'), end = datetime.datetime.today().strftime('%Y-%m-%d')))
-        self.pushButton_last_year.clicked.connect(lambda:self.plot_dapan_profile(code = data_extractor.index_code_map[self.comboBox_index_type.currentText()], start = (datetime.datetime.today()-datetime.timedelta(365)).strftime('%Y-%m-%d'), end = datetime.datetime.today().strftime('%Y-%m-%d')))
+        self.pushButton_last_week.clicked.connect(lambda:self.plot_dapan_profile(start = (datetime.datetime.today()-datetime.timedelta(7)).strftime('%Y-%m-%d'), end = datetime.datetime.today().strftime('%Y-%m-%d')))
+        self.pushButton_last_month.clicked.connect(lambda:self.plot_dapan_profile(start = (datetime.datetime.today()-datetime.timedelta(30)).strftime('%Y-%m-%d'), end = datetime.datetime.today().strftime('%Y-%m-%d')))
+        self.pushButton_last_three_month.clicked.connect(lambda:self.plot_dapan_profile(start = (datetime.datetime.today()-datetime.timedelta(90)).strftime('%Y-%m-%d'), end = datetime.datetime.today().strftime('%Y-%m-%d')))
+        self.pushButton_last_six_month.clicked.connect(lambda:self.plot_dapan_profile(start = (datetime.datetime.today()-datetime.timedelta(183)).strftime('%Y-%m-%d'), end = datetime.datetime.today().strftime('%Y-%m-%d')))
+        self.pushButton_last_year.clicked.connect(lambda:self.plot_dapan_profile(start = (datetime.datetime.today()-datetime.timedelta(365)).strftime('%Y-%m-%d'), end = datetime.datetime.today().strftime('%Y-%m-%d')))
         self.pushButton_extract_3.clicked.connect(self.extract_fund_info)
         self.pushButton_extract_4.clicked.connect(self.plot_poforlio_fund)
         self.pushButton_sort_fund.clicked.connect(self.sort_fund_rank)
@@ -181,10 +181,10 @@ class MyMainWindow(QMainWindow):
         self.pushButton_add_one_row.clicked.connect(self.append_one_row)
         self.pushButton_save_fund_group.clicked.connect(self.save_fund_group)
         self.comboBox_fund_group_list.activated.connect(self.load_fund_group)
-        self.values_000001 = []
-        self.values_000016 = []
-        self.values_000300 = []
-        self.values_000688 = []
+        #self.values_sh000001 = []
+        #self.values_sh000016 = []
+        #self.values_sh000300 = []
+        #self.values_sh000688 = []
         self.values_specified = []
         # self.extract_selected_index()
         self.setup_plot()
@@ -460,8 +460,10 @@ class MyMainWindow(QMainWindow):
 
     def extract_selected_index(self):
         code = data_extractor.index_code_map[self.comboBox_index_type.currentText()]
-        if len(getattr(self,'values_{}'.format(code)))==0:
-            setattr(self,'values_{}'.format(code),data_extractor.extract_all_records(code))
+        self.lineEdit_index_code.setText(code)
+        if not hasattr(self,'values_{}'.format(code)):
+            # setattr(self,'values_{}'.format(code),data_extractor.extract_all_records(code))
+            setattr(self,'values_{}'.format(code),data_extractor.extract_index_records(code))
         self.set_current_price(code)
 
     def _format_axis(self, ax_list):
@@ -630,9 +632,10 @@ class MyMainWindow(QMainWindow):
         # self.lr.setZValue(-10)
         # self.ax_dapan = self.mplwidget_dapan.addPlot(clear = True)
         self.ax_dapan_zoomin = self.mplwidget_dapan.addPlot(clear = True)
-        # self.lr.sigRegionChanged.connect(self._updatePlot)
-        # self.ax_dapan_zoomin.sigXRangeChanged.connect(self._updateRegion)
-        # self.ax_dapan.addItem(self.lr)
+        self.ax_dapan_zoomin.addLegend()
+        self.ax_dapan_zoomin_right = self._add_y_axis(self.ax_dapan_zoomin, '市盈率',4, ['市盈率','PE_20%','PE_40%','PE_60%'])
+        # if not hasattr(self,'ax_dapan_zoomin_right'):
+            # self.ax_dapan_zoomin_right = self._add_y_axis(self.ax_dapan_zoomin, '市盈率',4, ['市盈率','PE_20%','PE_40%','PE_60%'])
         self.vLine = pg.InfiniteLine(angle=90, movable=False)
         self.hLine = pg.InfiniteLine(angle=0, movable=False)
         self.ax_dapan_zoomin.addItem(self.vLine, ignoreBounds=True)
@@ -794,7 +797,6 @@ class MyMainWindow(QMainWindow):
         max_y = max(self.values_specified['high_price'][index_left:index_right])
         self.ax_dapan_zoomin.setYRange(min_y,max_y, padding=0)
 
-
     def _updatePlot_fund(self):
         self.ax_fund_zoomin.setXRange(*self.lr_fund.getRegion(), padding=0)
         bound_left, bound_right = self.lr_fund.getRegion()
@@ -810,19 +812,58 @@ class MyMainWindow(QMainWindow):
     def _updateRegion_fund(self):
         self.lr_fund.setRegion(self.ax_fund_zoomin.getViewBox().viewRange()[0])
 
-    def plot_dapan_profile(self, code = '000001', start = '2019-01-01', end = '2021-03-22'):
-        self.setup_plot()
-        if getattr(self,'values_{}'.format(code)).__len__() == 0:                
-            setattr(self,'values_{}'.format(code),data_extractor.extract_all_records(code))
-            self.set_current_price(code)
-        values = data_extractor.extract_index_data(code, start, end, getattr(self,'values_{}'.format(code)))
+    def plot_dapan_profile(self, start = '2019-01-01', end = '2021-03-22'):
+        #self.setup_plot()
+        # self.mplwidget_dapan.clear()
+        #self.ax_dapan_zoomin = self.mplwidget_dapan.addPlot(clear = True)
+        if self.radioButton_show_index.isChecked():
+            code = self.lineEdit_index_code.text()
+            if not hasattr(self,'values_{}'.format(code)):               
+                setattr(self,'values_{}'.format(code),data_extractor.extract_index_records(code))
+                self.set_current_price(code)
+            values = data_extractor.extract_index_records(code, start, end)
+        else:
+            code = self.lineEdit_stock_code.text()
+            adjust = {'前复权':'qfq','后复权':'hfq','不复权':''}[self.comboBox_reinstatement.currentText()]
+            identifier = {'A股':'a','美股':'us','港股':'hk'}[self.comboBox_listing_location.currentText()]              
+            if not hasattr(self,'values_{}'.format(code)):
+                setattr(self,'values_{}'.format(code),data_extractor.extract_stock_records(code, adjust = adjust, identifier = identifier))
+                self.set_current_price(code)
+            values = data_extractor.extract_stock_records(code, start=start, end=end, adjust = adjust, identifier = identifier)
         # self.pe_values_specified = data_extractor.extract_pe_data(code, start, end)
         self.values_specified = values
         # item = CandlestickItem(values)
-        item2 = CandlestickItem(values)
+        if hasattr(self, 'item2'):
+            self.ax_dapan_zoomin.removeItem(self.item2)
+        self.item2 = CandlestickItem(values)
         # self.ax_dapan.addItem(item)
-        self.ax_dapan_zoomin.addItem(item2)
+        self.ax_dapan_zoomin.addItem(self.item2)
         self.set_tick_strings_dapan()
+        self.plot_peTTM(start, end)
+
+    def plot_peTTM(self, start, end):
+        code = data_extractor.pe_name_map[self.comboBox_index_type_for_pe.currentText()+'市盈率']
+        pe_data = data_extractor.extract_index_pe_data(code=code, script_path = script_path)
+        def _get_pe_at_percent(percent):
+            pe_sorted = sorted(pe_data['averagePETTM'].tolist())
+            return pe_sorted[int(round(len(pe_sorted)*percent/100.,0))]
+        def _convert_date(date_str):
+            return (datetime.datetime.strptime(date_str, '%Y-%m-%d').date() - datetime.date(1, 1, 1)).days
+        pe_20 = _get_pe_at_percent(20)
+        pe_40 = _get_pe_at_percent(40)
+        pe_60 = _get_pe_at_percent(60)
+        x1, x2 = _convert_date(start), _convert_date(end)
+        date = pe_data['date'].to_numpy()
+        x = pe_data['date'][np.argmin(abs(date-x1)):np.argmin(abs(date-x2))].to_numpy()
+        pe_y = pe_data['averagePETTM'][np.argmin(abs(date-x1)):np.argmin(abs(date-x2))].to_numpy()
+        self.ax_dapan_zoomin_right[0].setData(x=x, y=pe_y)
+        self.ax_dapan_zoomin_right[0].setPen(pg.mkPen('y', width=1))
+        self.ax_dapan_zoomin_right[1].setData(x=[x1,x2], y=[pe_20,pe_20])
+        self.ax_dapan_zoomin_right[1].setPen(pg.mkPen('g', width=1))
+        self.ax_dapan_zoomin_right[2].setData(x=[x1,x2], y=[pe_40,pe_40])
+        self.ax_dapan_zoomin_right[2].setPen(pg.mkPen('b', width=1))
+        self.ax_dapan_zoomin_right[3].setData(x=[x1,x2], y=[pe_60,pe_60])
+        self.ax_dapan_zoomin_right[3].setPen(pg.mkPen('r', width=1))
 
     def set_tick_strings_dapan(self):
         def _find_nearest_neighbor(values_pool, values):
