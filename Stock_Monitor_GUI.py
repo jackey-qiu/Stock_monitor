@@ -5,6 +5,7 @@ from PyQt5.QtGui import QPixmap, QImage
 from matplotlib.backends.backend_qt5agg import FigureCanvas
 from matplotlib.figure import Figure
 from PyQt5 import uic, QtCore
+from PyQt5.QtCore import QTimer
 import random
 import numpy as np
 import matplotlib.pyplot as plt
@@ -158,7 +159,7 @@ class CandlestickItem(pg.GraphicsObject):
 class MyMainWindow(QMainWindow):
     def __init__(self, parent = None):
         super(MyMainWindow, self).__init__(parent)
-        uic.loadUi(os.path.join(script_path,'stock_monitor_app.ui'),self)
+        uic.loadUi(os.path.join(script_path,'stock_monitor_app_new.ui'),self)
         # self.setupUi(self)
         # plt.style.use('ggplot')
         self.widget_terminal.update_name_space('main_gui',self)
@@ -191,6 +192,20 @@ class MyMainWindow(QMainWindow):
         self.data_extractor = data_extractor
         self.fill_fund_groups()
         self.extract_code_names()
+        self.timer_update_time = QTimer(self)
+        self.timer_update_time.timeout.connect(self.set_time_label)
+        self.timer_update_time.start(1000)
+
+    def set_time_label(self):
+        now = datetime.datetime.now()
+        time_ = now.strftime("%H:%M:%S")
+        year = now.year
+        month = now.month
+        day = now.day
+        weekday = now.weekday()
+        weekday_map = {0:'一',1:'二',2:'三',3:'四',4:'五',5:'六',6:'日'}
+        self.label_today.setText('{}年{}月{}日, 星期{}'.format(year, month, day, weekday_map[weekday]))
+        self.label_time.setText(time_)
 
     def extract_code_names(self):
         self.index_code_name = pd.read_csv(os.path.join(script_path, 'code_name','index_code_name.csv'),dtype = {'symbol':np.str})
@@ -654,7 +669,7 @@ class MyMainWindow(QMainWindow):
         self.hLine = pg.InfiniteLine(angle=0, movable=False)
         self.ax_dapan_zoomin.addItem(self.vLine, ignoreBounds=True)
         self.ax_dapan_zoomin.addItem(self.hLine, ignoreBounds=True)
-        self.label = pg.LabelItem(justify='right')
+        # self.label = pg.LabelItem(justify='right')
         # self.ax_dapan_zoomin.addItem(self.label)
         self.proxy = pg.SignalProxy(self.ax_dapan_zoomin.scene().sigMouseMoved, rateLimit=60, slot=self.mouseMoved)
         # self.ax_dapan.sigXRangeChanged.connect(self.set_tick_strings_dapan)
@@ -681,18 +696,20 @@ class MyMainWindow(QMainWindow):
     def set_current_price(self, code):
         if len(getattr(self,'values_{}'.format(code)))==0:
             setattr(self,'values_{}'.format(code),data_extractor.extract_all_records(code))
-        self.lineEdit_close_price.setText(str(getattr(self,'values_{}'.format(code))['close_price'].iloc[-1]))
-        self.lineEdit_open_price.setText(str(getattr(self,'values_{}'.format(code))['open_price'].iloc[-1]))
-        self.lineEdit_high_price.setText(str(getattr(self,'values_{}'.format(code))['high_price'].iloc[-1]))
-        self.lineEdit_low_price.setText(str(getattr(self,'values_{}'.format(code))['low_price'].iloc[-1]))
-        self.lineEdit_volume.setText(str(getattr(self,'values_{}'.format(code))['total'].iloc[-1]))
-        self.lineEdit_amount.setText(str(getattr(self,'values_{}'.format(code))['trancaction'].iloc[-1]))
-        self.lineEdit_amp.setText('%'+str(getattr(self,'values_{}'.format(code))['amp'].iloc[-1]))
+        close_price = str(getattr(self,'values_{}'.format(code))['close_price'].iloc[-1])
+        open_price=str(getattr(self,'values_{}'.format(code))['open_price'].iloc[-1])
+        high_price=str(getattr(self,'values_{}'.format(code))['high_price'].iloc[-1])
+        low_price=str(getattr(self,'values_{}'.format(code))['low_price'].iloc[-1])
+        volume=str(getattr(self,'values_{}'.format(code))['total'].iloc[-1])
+        amount=str(getattr(self,'values_{}'.format(code))['trancaction'].iloc[-1])
+        amp='%'+str(getattr(self,'values_{}'.format(code))['amp'].iloc[-1])
         close_current_day = getattr(self,'values_{}'.format(code))['close_price'].iloc[-1]
         close_last_day = getattr(self,'values_{}'.format(code))['close_price'].iloc[-2]
         change = str(round((close_current_day - close_last_day)/close_last_day*100,2))
         # print(getattr(self,'values_{}'.format(code))['rate'].iloc[-1])
-        self.lineEdit_change_rate.setText('%'+change)
+        change_rate='%'+change
+        info = '开盘日期:{},    开盘价:{},   收盘价:{},   极大值:{},   极小值:{},   涨跌幅:{},   振幅:{},   总市值:{},   成交量:{}'.format(datetime.datetime.today().strftime('%Y-%m-%d'),open_price, close_price, high_price, low_price, change, amp, volume, amount)
+        self.lineEdit_info_for_today.setText(info)
         # self.lineEdit_amp.setText('%'+str(getattr(self,'values_{}'.format(code))['rate'].iloc[-1]))
 
     def mouseMoved(self,evt):
@@ -837,6 +854,7 @@ class MyMainWindow(QMainWindow):
                 setattr(self,'values_{}'.format(code),data_extractor.extract_index_records(code))
                 self.set_current_price(code)
             values = data_extractor.extract_index_records(code, start, end)
+            self.ax_dapan_zoomin.setLabel('left', '{}:收盘价（元)'.format(self.lineEdit_index_name.text()))
         else:
             code = self.lineEdit_stock_code.text()
             adjust = {'前复权':'qfq','后复权':'hfq','不复权':''}[self.comboBox_reinstatement.currentText()]
@@ -849,7 +867,9 @@ class MyMainWindow(QMainWindow):
                 setattr(self,'values_{}'.format(code),data_extractor.extract_stock_records(code, adjust = adjust, identifier = identifier))
                 self.set_current_price(code)
             values = data_extractor.extract_stock_records(code, start=start, end=end, adjust = adjust, identifier = identifier)
+            self.ax_dapan_zoomin.setLabel('left', '{}:收盘价（元)'.format(self.lineEdit_stock_name.text()))
         # self.pe_values_specified = data_extractor.extract_pe_data(code, start, end)
+        self.ax_dapan_zoomin.setLabel('right', '{}:市盈率'.format(self.comboBox_index_type_for_pe.currentText()))
         self.values_specified = values
         # item = CandlestickItem(values)
         if hasattr(self, 'item2'):
@@ -889,26 +909,26 @@ class MyMainWindow(QMainWindow):
 
         self.ax_dapan_zoomin_right[1].setData(x=[x1,x2], y=[pe_20,pe_20])
         self.ax_dapan_zoomin_right[1].setPen(pg.mkPen('g', width=1,style = QtCore.Qt.DotLine))
-        if min(pe_y)>pe_20:
-            pass
-        else:
-            self.ax_dapan_zoomin_right[1].setFillLevel(min(pe_y))
-            self.ax_dapan_zoomin_right[1].setFillBrush((0,255,0,30))
+        # if min(pe_y)>pe_20:
+            # pass
+        # else:
+            # self.ax_dapan_zoomin_right[1].setFillLevel(min(pe_y))
+            # self.ax_dapan_zoomin_right[1].setFillBrush((0,255,0,30))
 
         self.ax_dapan_zoomin_right[2].setData(x=[x1,x2], y=[pe_40,pe_40])
         self.ax_dapan_zoomin_right[2].setPen(pg.mkPen('b', width=1,style = QtCore.Qt.DotLine))
-        self.ax_dapan_zoomin_right[2].setFillLevel(pe_20)
-        self.ax_dapan_zoomin_right[2].setFillBrush((0,0,255,30))
+        # self.ax_dapan_zoomin_right[2].setFillLevel(pe_20)
+        # self.ax_dapan_zoomin_right[2].setFillBrush((0,0,255,30))
 
         self.ax_dapan_zoomin_right[3].setData(x=[x1,x2], y=[pe_60,pe_60])
         self.ax_dapan_zoomin_right[3].setPen(pg.mkPen('y', width=1,style = QtCore.Qt.DotLine))
-        self.ax_dapan_zoomin_right[3].setFillLevel(pe_40)
-        self.ax_dapan_zoomin_right[3].setFillBrush((255,255,0,30))
+        # self.ax_dapan_zoomin_right[3].setFillLevel(pe_40)
+        # self.ax_dapan_zoomin_right[3].setFillBrush((255,255,0,30))
 
         self.ax_dapan_zoomin_right[4].setData(x=[x1,x2], y=[pe_80,pe_80])
         self.ax_dapan_zoomin_right[4].setPen(pg.mkPen('r', width=1,style = QtCore.Qt.DotLine))
-        self.ax_dapan_zoomin_right[4].setFillLevel(pe_60)
-        self.ax_dapan_zoomin_right[4].setFillBrush((255,0,0,30))
+        # self.ax_dapan_zoomin_right[4].setFillLevel(pe_60)
+        # self.ax_dapan_zoomin_right[4].setFillBrush((255,0,0,30))
 
     def set_tick_strings_dapan(self):
         def _find_nearest_neighbor(values_pool, values):
