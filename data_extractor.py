@@ -103,12 +103,15 @@ def extract_index_pe_data(code='000300.XSHG', start=None, end=None, script_path 
     def _convert_date(date_str):
         return (datetime.datetime.strptime(date_str, '%Y-%m-%d').date() - datetime.date(1, 1, 1)).days
     path = os.path.join(script_path, 'pe_data', list(pe_name_map.keys())[list(pe_name_map.values()).index(code)]+'.csv')
-    try:
-        data = ak.stock_a_pe(market=code)
-        data.to_csv(path)
-        print('pe data have been updated successfully!')
-    except:
-        print('Could not update the pe data from server, use the old data instead!')
+    if datetime.datetime.fromtimestamp(os.path.getmtime(path)).strftime('%Y-%m-%d')!= datetime.datetime.today().strftime('%Y-%m-%d'):
+        try:
+            data = ak.stock_a_pe(market=code)
+            data.to_csv(path)
+            print('pe data have been updated successfully!')
+        except:
+            print('Could not update the pe data from server, use the old data instead!')
+    else:
+        pass
     data = pd.read_csv(path)
     data['date'] = data['date'].apply(pd.Timestamp)
     if start==None and end==None:
@@ -120,7 +123,9 @@ def extract_index_pe_data(code='000300.XSHG', start=None, end=None, script_path 
     if 'averagePETTM' in data_sub.columns:
         return data_sub[['date','averagePETTM']]
     else:
-        return data_sub[['date','pe']]
+        data_sub = data_sub[['date','pe']]
+        data_sub.columns = ['date','averagePETTM']
+        return data_sub
 
     '''
     lg = bs.login()

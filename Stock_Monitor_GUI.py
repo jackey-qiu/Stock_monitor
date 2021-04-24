@@ -190,6 +190,12 @@ class MyMainWindow(QMainWindow):
         self.setup_plot()
         self.data_extractor = data_extractor
         self.fill_fund_groups()
+        self.extract_code_names()
+
+    def extract_code_names(self):
+        self.index_code_name = pd.read_csv(os.path.join(script_path, 'code_name','index_code_name.csv'),dtype = {'symbol':np.str})
+        self.stock_code_name_a_stock = pd.read_csv(os.path.join(script_path, 'code_name','stock_code_name.csv'),dtype = {'symbol':np.str})
+        self.stock_code_name_hk_stock = pd.read_csv(os.path.join(script_path, 'code_name','stock_code_name_hk.csv'),dtype = {'symbol':np.str})
 
     def fill_fund_groups(self):
         self.comboBox_fund_group_list.clear()
@@ -632,8 +638,16 @@ class MyMainWindow(QMainWindow):
         # self.lr.setZValue(-10)
         # self.ax_dapan = self.mplwidget_dapan.addPlot(clear = True)
         self.ax_dapan_zoomin = self.mplwidget_dapan.addPlot(clear = True)
+        self.ax_dapan_zoomin.showAxis('top')
+        self.ax_dapan_zoomin.getAxis('top').setTicks([])
         self.ax_dapan_zoomin.addLegend()
-        self.ax_dapan_zoomin_right = self._add_y_axis(self.ax_dapan_zoomin, '市盈率',4, ['市盈率','PE_20%','PE_40%','PE_60%'])
+        self.ax_dapan_zoomin.setLabel('left', '收盘价（元）')
+        self.ax_dapan_zoomin.setLabel('bottom', '日期（年-月-日）')
+        self.ax_dapan_zoomin_right = self._add_y_axis(self.ax_dapan_zoomin, '市盈率',5, ['市盈率','PE_20%','PE_40%','PE_60%','PE_80%'])
+        legend = pg.LegendItem((80,60), offset=(70,20)) 
+        legend.setParentItem(self.ax_dapan_zoomin)
+        for each in self.ax_dapan_zoomin_right:
+            legend.addItem(each, each.name()) 
         # if not hasattr(self,'ax_dapan_zoomin_right'):
             # self.ax_dapan_zoomin_right = self._add_y_axis(self.ax_dapan_zoomin, '市盈率',4, ['市盈率','PE_20%','PE_40%','PE_60%'])
         self.vLine = pg.InfiniteLine(angle=90, movable=False)
@@ -818,6 +832,7 @@ class MyMainWindow(QMainWindow):
         #self.ax_dapan_zoomin = self.mplwidget_dapan.addPlot(clear = True)
         if self.radioButton_show_index.isChecked():
             code = self.lineEdit_index_code.text()
+            self.lineEdit_index_name.setText(self.index_code_name[self.index_code_name['symbol']==code].iloc[0]['name'])
             if not hasattr(self,'values_{}'.format(code)):               
                 setattr(self,'values_{}'.format(code),data_extractor.extract_index_records(code))
                 self.set_current_price(code)
@@ -825,7 +840,11 @@ class MyMainWindow(QMainWindow):
         else:
             code = self.lineEdit_stock_code.text()
             adjust = {'前复权':'qfq','后复权':'hfq','不复权':''}[self.comboBox_reinstatement.currentText()]
-            identifier = {'A股':'a','美股':'us','港股':'hk'}[self.comboBox_listing_location.currentText()]              
+            identifier = {'A股':'a','美股':'us','港股':'hk'}[self.comboBox_listing_location.currentText()]
+            if identifier == 'a':
+                self.lineEdit_stock_name.setText(self.stock_code_name_a_stock[self.stock_code_name_a_stock['symbol']==code].iloc[0]['name'])
+            elif identifier == 'hk':
+                self.lineEdit_stock_name.setText(self.stock_code_name_hk_stock[self.stock_code_name_hk_stock['symbol']==code].iloc[0]['name'])
             if not hasattr(self,'values_{}'.format(code)):
                 setattr(self,'values_{}'.format(code),data_extractor.extract_stock_records(code, adjust = adjust, identifier = identifier))
                 self.set_current_price(code)
@@ -840,30 +859,56 @@ class MyMainWindow(QMainWindow):
         self.ax_dapan_zoomin.addItem(self.item2)
         self.set_tick_strings_dapan()
         self.plot_peTTM(start, end)
+        self.ax_dapan_zoomin.autoRange()
 
     def plot_peTTM(self, start, end):
+        self.lineEdit_PE.setText('')
+        self.lineEdit.setText('')
         code = data_extractor.pe_name_map[self.comboBox_index_type_for_pe.currentText()+'市盈率']
         pe_data = data_extractor.extract_index_pe_data(code=code, script_path = script_path)
         def _get_pe_at_percent(percent):
             pe_sorted = sorted(pe_data['averagePETTM'].tolist())
             return pe_sorted[int(round(len(pe_sorted)*percent/100.,0))]
+        def _get_percent_at_pe(pe):
+            pe_sorted = sorted(pe_data['averagePETTM'].tolist())
+            return round(pe_sorted.index(pe)/len(pe_sorted),2)*100
         def _convert_date(date_str):
             return (datetime.datetime.strptime(date_str, '%Y-%m-%d').date() - datetime.date(1, 1, 1)).days
+        self.lineEdit_PE.setText(str(pe_data.iloc[-1]['averagePETTM']))
+        self.lineEdit.setText(str(_get_percent_at_pe(pe_data.iloc[-1]['averagePETTM']))+'%')
         pe_20 = _get_pe_at_percent(20)
         pe_40 = _get_pe_at_percent(40)
         pe_60 = _get_pe_at_percent(60)
+        pe_80 = _get_pe_at_percent(80)
         x1, x2 = _convert_date(start), _convert_date(end)
         date = pe_data['date'].to_numpy()
         x = pe_data['date'][np.argmin(abs(date-x1)):np.argmin(abs(date-x2))].to_numpy()
         pe_y = pe_data['averagePETTM'][np.argmin(abs(date-x1)):np.argmin(abs(date-x2))].to_numpy()
         self.ax_dapan_zoomin_right[0].setData(x=x, y=pe_y)
         self.ax_dapan_zoomin_right[0].setPen(pg.mkPen('y', width=1))
+
         self.ax_dapan_zoomin_right[1].setData(x=[x1,x2], y=[pe_20,pe_20])
-        self.ax_dapan_zoomin_right[1].setPen(pg.mkPen('g', width=1))
+        self.ax_dapan_zoomin_right[1].setPen(pg.mkPen('g', width=1,style = QtCore.Qt.DotLine))
+        if min(pe_y)>pe_20:
+            pass
+        else:
+            self.ax_dapan_zoomin_right[1].setFillLevel(min(pe_y))
+            self.ax_dapan_zoomin_right[1].setFillBrush((0,255,0,30))
+
         self.ax_dapan_zoomin_right[2].setData(x=[x1,x2], y=[pe_40,pe_40])
-        self.ax_dapan_zoomin_right[2].setPen(pg.mkPen('b', width=1))
+        self.ax_dapan_zoomin_right[2].setPen(pg.mkPen('b', width=1,style = QtCore.Qt.DotLine))
+        self.ax_dapan_zoomin_right[2].setFillLevel(pe_20)
+        self.ax_dapan_zoomin_right[2].setFillBrush((0,0,255,30))
+
         self.ax_dapan_zoomin_right[3].setData(x=[x1,x2], y=[pe_60,pe_60])
-        self.ax_dapan_zoomin_right[3].setPen(pg.mkPen('r', width=1))
+        self.ax_dapan_zoomin_right[3].setPen(pg.mkPen('y', width=1,style = QtCore.Qt.DotLine))
+        self.ax_dapan_zoomin_right[3].setFillLevel(pe_40)
+        self.ax_dapan_zoomin_right[3].setFillBrush((255,255,0,30))
+
+        self.ax_dapan_zoomin_right[4].setData(x=[x1,x2], y=[pe_80,pe_80])
+        self.ax_dapan_zoomin_right[4].setPen(pg.mkPen('r', width=1,style = QtCore.Qt.DotLine))
+        self.ax_dapan_zoomin_right[4].setFillLevel(pe_60)
+        self.ax_dapan_zoomin_right[4].setFillBrush((255,0,0,30))
 
     def set_tick_strings_dapan(self):
         def _find_nearest_neighbor(values_pool, values):

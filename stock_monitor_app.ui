@@ -109,6 +109,9 @@
               <height>16777215</height>
              </size>
             </property>
+            <property name="text">
+             <string>sh000001</string>
+            </property>
            </widget>
           </item>
           <item>
