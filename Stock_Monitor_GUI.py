@@ -182,6 +182,7 @@ class MyMainWindow(QMainWindow):
         self.pushButton_add_one_row.clicked.connect(self.append_one_row)
         self.pushButton_save_fund_group.clicked.connect(self.save_fund_group)
         self.comboBox_fund_group_list.activated.connect(self.load_fund_group)
+        self.pushButton_simulate.clicked.connect(self.simulate_investment)
         #self.values_sh000001 = []
         #self.values_sh000016 = []
         #self.values_sh000300 = []
@@ -455,6 +456,45 @@ class MyMainWindow(QMainWindow):
         self.ax_fund_group_comp.sigXRangeChanged.connect(lambda:self.set_tick_strings_general(dates = self.profit_dates, ax_handles = [self.ax_fund_group_comp.getAxis('bottom')], ticks_num = 6))
 
         # return return_dates, profits
+    def simulate_investment(self):
+        years=int(self.lineEdit_invest_years.text())
+        month_profit_rate=float(self.lineEdit_rate_monthly.text())/100
+        invest_amount = float(self.lineEdit_invest_amount.text())
+        frequency = ['onetime', 'month'][int(self.radioButton_monthly.isChecked())]
+        if frequency == 'month':
+            time, cost, wealth = self.data_extractor.calc_wealth(years = years, month_saving_amount = invest_amount, month_profit_rate = month_profit_rate)
+        else:
+            time, cost, wealth = self.data_extractor.calc_wealth_once_investment(years = years, total_invest_amount = invest_amount, month_profit_rate = month_profit_rate)
+        profit_rate = (np.array(wealth) - np.array(cost))/np.array(cost)*100
+        self.time_simulation, self.cost_simulation, self.wealth_simulation, self.rate_simulation = time, cost, wealth, profit_rate
+        try:
+            [self.ax_profit.scene().removeItem(each) for each in self.ax_profit_right]
+        except:
+            pass
+        self.widget_profit_curve.clear()
+        self.ax_profit = self.widget_profit_curve.addPlot(clear = True)
+        self.proxy_profit_investment = pg.SignalProxy(self.ax_profit.scene().sigMouseMoved, rateLimit=60, slot=self.mouseMoved_profit_investment_simulation)
+        self.ax_profit.plot(time,profit_rate, clear = True,pen=pg.mkPen('g', width=2))
+        self.ax_profit_movable = self.ax_profit.plot(time[0:1], profit_rate[0:1], pen=None, symbolBrush=(200,200,0), symbolPen='w', symbol='o', symbolSize=10)
+        #self.ax_profit.plot(self.buy_in_dates, self.profits_buy_in, pen=None, symbolBrush=(200,0,0), symbolPen='w', symbol='arrow_up', symbolSize=40, name = '买入')
+        #self.ax_profit.plot(self.sell_out_dates, self.profits_sell_out, pen=None, symbolBrush=(0, 0,200), symbolPen='w', symbol='arrow_down', symbolSize=40, name = '卖出')
+        #self.set_tick_strings_general(dates = self.profit_dates, ax_handles = [self.ax_profit.getAxis('bottom')], ticks_num = 6)
+        #self.ax_profit.sigXRangeChanged.connect(lambda:self.set_tick_strings_general(dates = self.profit_dates, ax_handles = [self.ax_profit.getAxis('bottom')], ticks_num = 6))
+        self.ax_profit.getAxis('left').setLabel('收益率(%)')
+        self.ax_profit.getAxis('left').setPen(pg.mkPen('g', width=2))
+        self.ax_profit.getAxis('bottom').setLabel('投资年限（年）')
+        self.ax_profit_right = self._add_y_axis(self.ax_profit, '投资资产（元）',4, ['总投资','总成本','单点总投资','单点总成本'])
+        self.ax_profit_right[0].setData(x=time, y=wealth)
+        self.ax_profit_right[0].setPen(pg.mkPen('y', width=2))
+        self.ax_profit_right[1].setData(x=time, y=cost)
+        self.ax_profit_right[1].setPen(pg.mkPen('r', width=2))
+        self.ax_profit_right[2].setData(x=time[0:1], y=wealth[0:1],pen=None, symbolBrush=(0,100,100),symbol='o', symbolSize=10)
+        self.ax_profit_right[3].setData(x=time[0:1], y=cost[0:1],pen=None, symbolBrush=(200,0,50),symbol='o', symbolSize=10)
+
+        self.vLine_profit_investment = pg.InfiniteLine(angle=90, movable=False)
+        self.hLine_profit_investment = pg.InfiniteLine(angle=0, movable=False)
+        self.ax_profit.addItem(self.vLine_profit_investment, ignoreBounds = True)
+        self.ax_profit.addItem(self.hLine_profit_investment, ignoreBounds = True)
 
     def _add_y_axis(self, original_ax, y_label, number_curves = 1, names = []):
         if len(names)<number_curves:
@@ -803,6 +843,23 @@ class MyMainWindow(QMainWindow):
             else:
                 sell_out_info = ''
             self.lineEdit_profit_investment.setText('日期:{};  盈亏率:{:4.2f}%; 总成本:{:4.2f} 元; 总资产:{:4.2f} 元; 盈亏:{:4.2f} 元'.format((datetime.date(1, 1, 1)+datetime.timedelta(int(self.profit_dates[which]))).strftime('%Y-%m-%d'),result, cost, wealth, wealth-cost)+buy_in_info+sell_out_info)
+            self.vLine_profit_investment.setPos(mousePoint.x())
+            self.hLine_profit_investment.setPos(mousePoint.y())
+
+    def mouseMoved_profit_investment_simulation(self,evt):
+        pos = evt[0]  ## using signal proxy turns original arguments into a tuple
+        if self.ax_profit.sceneBoundingRect().contains(pos):
+            mousePoint = self.ax_profit.vb.mapSceneToView(pos)
+            index = mousePoint.x()
+            which = np.argmin(abs(np.array(self.time_simulation)-index))
+            result = self.rate_simulation[which]
+            cost = self.cost_simulation[which]
+            wealth = self.wealth_simulation[which]
+            self.ax_profit_movable.setData(x=[self.time_simulation[which]],y=[result])
+            self.ax_profit_right[2].setData(x=[self.time_simulation[which]],y=[wealth])
+            self.ax_profit_right[3].setData(x=[self.time_simulation[which]],y=[cost])
+
+            self.lineEdit_profit_investment.setText('年限:{}年;  盈亏率:{:4.2f}%; 总成本:{:4.2f} 元; 总资产:{:4.2f} 元; 盈亏:{:4.2f} 元'.format(round(self.time_simulation[which],3),result, cost, wealth, wealth-cost))
             self.vLine_profit_investment.setPos(mousePoint.x())
             self.hLine_profit_investment.setPos(mousePoint.y())
 

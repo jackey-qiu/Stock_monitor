@@ -233,3 +233,36 @@ def extract_fund_rank(fund_type, sort_by, sort_method):
         fund_em_open_fund_rank_df[each] = fund_em_open_fund_rank_df[each].replace('',np.nan).astype(float)
     return fund_em_open_fund_rank_df.sort_values(by=sort_by,ascending = sort_method)
 
+def calc_wealth(years = 10, month_saving_amount = 500, month_profit_rate = 0.01):
+    total_months = years*12
+    total_wealth = 0
+    time_list = []
+    wealth_list = []
+    cost_list = []
+    for i in range(total_months):
+        time_list.append(i/12.)
+        total_wealth += month_saving_amount*(1+month_profit_rate)**(total_months-i)
+        total_wealth_this_month = 0
+        for ii in range(i+1):
+            total_wealth_this_month += month_saving_amount*(1+month_profit_rate)**(i+1-ii)
+        wealth_list.append(total_wealth_this_month)
+        cost_list.append((i+1)*month_saving_amount)
+    
+    # print('Total wealth is {} after {} years with a saving plan at monthly raising rate of {} and monthly saving amount of {}'.format(total_wealth, years, month_profit_rate, month_saving_amount))
+    # print('Net profit is {} at a investment rate of {}%'.format(total_wealth-month_saving_amount*total_months, total_wealth/(month_saving_amount*total_months)*100))
+    return time_list, cost_list, wealth_list
+
+def calc_wealth_once_investment(years = 10, total_invest_amount = 1000000, month_profit_rate = 0.01):
+    total_months = years*12
+    time_list = []
+    wealth_list = []
+    cost_list = []
+    total_wealth = total_invest_amount*(1+month_profit_rate)**total_months
+    for i in range(total_months):
+        time_list.append(i/12.)
+        cost_list.append(total_invest_amount)
+        wealth_list.append(total_invest_amount*(1+month_profit_rate)**(i+1))
+    # print('Total wealth is {} after {} years with an one-time investment of {} at monthly raising rate of {} '.format(total_wealth, years, total_invest_amount, month_profit_rate))
+    # print('Net profit is {} at a investment rate of {}%'.format(total_wealth-total_invest_amount, (total_wealth-total_invest_amount)/total_invest_amount*100))
+    return time_list, cost_list, wealth_list
+
