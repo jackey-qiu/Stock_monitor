@@ -5,6 +5,7 @@ from PyQt5.QtGui import QPixmap, QImage
 from matplotlib.backends.backend_qt5agg import FigureCanvas
 from matplotlib.figure import Figure
 from PyQt5 import uic, QtCore
+import PyQt5
 from PyQt5.QtCore import QTimer
 import random
 import numpy as np
@@ -47,14 +48,45 @@ def error_pop_up(msg_text = 'error', window_title = ['Error','Information','Warn
     msg.setWindowTitle(window_title)
     msg.exec_()
 
+class ButtonDelegate(QtGui.QItemDelegate):
+    def __init__(self, parent, name = '提取'):
+        QtGui.QItemDelegate.__init__(self, parent)
+        self.parent = parent
+        self.name = name
+
+    def createEditor(self, parent, option, index):
+        # combo = QtGui.QPushButton(str(index.data()), parent)
+        combo = QtGui.QPushButton(self.name, parent)
+        combo.setStyleSheet("background-color: red")
+
+        #self.connect(combo, QtCore.SIGNAL("currentIndexChanged(int)"), self, QtCore.SLOT("currentIndexChanged()"))
+        combo.clicked.connect(self.currentIndexChanged)
+        return combo
+        
+    def setEditorData(self, editor, index):
+        editor.blockSignals(True)
+        #editor.setCurrentIndex(int(index.model().data(index)))
+        editor.blockSignals(False)
+        
+    def setModelData(self, editor, model, index):
+        model.setData(index, editor.text(),QtCore.Qt.DisplayRole)
+        
+    @QtCore.pyqtSlot()
+    def currentIndexChanged(self):
+        self.parent.extract_fund_info()
+        #self.commitData.emit(self.sender())
+
 class PandasModel(QtCore.QAbstractTableModel):
     """
     Class to populate a table view with a pandas dataframe
     """
-    def __init__(self, data, tableviewer, parent=None):
+    def __init__(self, data, tableviewer, parent=None, button_column = False):
         QtCore.QAbstractTableModel.__init__(self, parent)
         self._data = data
+        if button_column:
+            self._data['Button'] = 'button'
         self.tableviewer = tableviewer
+        self.parent = parent
 
     def rowCount(self, parent=None):
         return self._data.shape[0]
@@ -64,13 +96,20 @@ class PandasModel(QtCore.QAbstractTableModel):
 
     def data(self, index, role):
         if index.isValid():
-            if role in [QtCore.Qt.DisplayRole, QtCore.Qt.EditRole] and index.column()!=0:
+            if 'Button' in list(self._data.columns):
+                # if index.column() == list(self._data.columns).index('Button'):
+                selected_rows = self.parent.tableView_fund_group_list.selectionModel().selectedRows()
+                if len(selected_rows)!=0 and selected_rows[0].row()==index.row():
+                    self.parent.lineEdit_fund_code.setText(self._data.iloc[index.row()]['基金代码'])
+
+            if role in [QtCore.Qt.DisplayRole, QtCore.Qt.EditRole] and index.column()!=0 and self._data.columns[index.column()]!='Button':
                 return str(self._data.iloc[index.row(), index.column()])
+            if self._data.columns[index.column()]=='Button':
+                # return ButtonDelegate(self.parent, str(self._data.iloc[index.row(), index.column()]))
+                return None 
             if role == QtCore.Qt.BackgroundRole and index.row()%2 == 0:
-                #return QtGui.QColor('lightGray')
                 return QtGui.QColor('green')
             if role == QtCore.Qt.BackgroundRole and index.row()%2 == 1:
-                # return QtGui.QColor('cyan')
                 return QtGui.QColor('lightGreen')
             if role == QtCore.Qt.ForegroundRole and index.row()%2 == 1:
                 return QtGui.QColor('black')
@@ -92,6 +131,12 @@ class PandasModel(QtCore.QAbstractTableModel):
         else:
             if str(value)!='':
                 self._data.iloc[index.row(),index.column()] = str(value)
+        if 'Button' in list(self._data.columns):
+            # if index.column() == list(self._data.columns).index('Button'):
+            selected_rows = self.parent.tableView_fund_group_list.selectionModel().selectedRows()
+            if len(selected_rows)!=0 and selected_rows[0].row()==index.row():
+                self.parent.lineEdit_fund_code.setText(self._data.iloc[index.row()]['基金代码'])
+
         self.dataChanged.emit(index, index)
         self.layoutAboutToBeChanged.emit()
         self.dataChanged.emit(self.createIndex(0, 0), self.createIndex(self.rowCount(0), self.columnCount(0)))
@@ -106,7 +151,7 @@ class PandasModel(QtCore.QAbstractTableModel):
 
     def headerData(self, rowcol, orientation, role):
         if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
-            return self._data.columns[rowcol]         
+            return self._data.columns[rowcol]     
         if orientation == QtCore.Qt.Vertical and role == QtCore.Qt.DisplayRole:
             return self._data.index[rowcol]         
         return None
@@ -117,6 +162,8 @@ class PandasModel(QtCore.QAbstractTableModel):
         else:
             if index.column()==0:
                 return (QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsUserCheckable)
+            # elif index.column()==7:
+                # return (QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable)
             else:
                 return (QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable)
 
@@ -225,9 +272,13 @@ class MyMainWindow(QMainWindow):
         data.sort_values(by=['基金代码','购入日期'], inplace = True)
         if not hasattr(self, 'pandas_model_fund_group'):
             cols = ['选择','基金代码','基金简称','购入日期','购入数量','卖出日期','卖出数量']
-            self.pandas_model_fund_group = PandasModel(data = data[cols],tableviewer = self.tableView_fund_group_list, parent=self) 
+            self.pandas_model_fund_group = PandasModel(data = data[cols],tableviewer = self.tableView_fund_group_list, parent=self, button_column=True) 
             self.tableView_fund_group_list.setModel(self.pandas_model_fund_group)
+            self.tableView_fund_group_list.setItemDelegateForColumn(7, ButtonDelegate(self))
             self.tableView_fund_group_list.resizeColumnsToContents() 
+            self.tableView_fund_group_list.setSelectionBehavior(PyQt5.QtWidgets.QAbstractItemView.SelectRows)
+            for row in range(0, self.pandas_model_fund_group.rowCount()):
+                self.tableView_fund_group_list.openPersistentEditor(self.pandas_model_fund_group.index(row, 7))
         else:
             self.pandas_model_fund_group._data = data
         self.pandas_model_fund_group.update_view()
@@ -640,6 +691,9 @@ class MyMainWindow(QMainWindow):
         self.set_tick_strings_general(dates = self.dates_current_fund, ax_handles = [self.ax_profit_grand.getAxis('bottom')], ticks_num = 6)
         self.ax_profit_grand.sigXRangeChanged.connect(lambda:self.set_tick_strings_general(dates = self.dates_current_fund, ax_handles = [self.ax_profit_grand.getAxis('bottom')], ticks_num = 6))
         self._format_axis([self.ax_fund, self.ax_fund_zoomin, self.ax_rank_fund, self.ax_profit_grand])
+
+        self.tabWidget_2.setCurrentIndex(1)
+        self.tabWidget.setCurrentIndex(0)
 
     def plot_poforlio_fund(self):
         self.widget_portfolio_bar.clear()
