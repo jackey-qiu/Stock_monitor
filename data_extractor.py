@@ -51,6 +51,7 @@ def extract_all_records(code):
 def extract_index_records(code='sh000016', start=None, end=None):
     #code should start with 'sh' or  'sz'
     result = ak.stock_zh_index_daily(symbol=code)
+    result.index = result.index.tz_localize(None)
     result['date'] = result.index
     result = result[['date','open','close','high','low','volume']]
     result['total'] = 'NaN'
@@ -76,6 +77,7 @@ def extract_stock_records(code='sh600000', start=None, end =None,adjust = 'qfq',
         result = ak.stock_hk_daily(symbol=code, adjust=adjust)
     elif identifier == 'us':
         result = ak.stock_us_daily(symbol=code, adjust=adjust)
+    result.index = result.index.tz_localize(None)
     result['date'] = result.index
     result = result[['date','open','close','high','low','volume']]
     result['total'] = 'NaN'
