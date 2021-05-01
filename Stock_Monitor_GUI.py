@@ -1,6 +1,9 @@
 import sys,os,qdarkstyle
 import urllib
 from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QInputDialog, QMessageBox
+from PyQt5.QtChart import QChart, QChartView, QPieSeries, QPieSlice
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QPainter, QPen
 from PyQt5.QtGui import QPixmap, QImage
 from matplotlib.backends.backend_qt5agg import FigureCanvas
 from matplotlib.figure import Figure
@@ -148,6 +151,8 @@ class PandasModel(QtCore.QAbstractTableModel):
         self.layoutAboutToBeChanged.emit()
         self.dataChanged.emit(self.createIndex(0, 0), self.createIndex(self.rowCount(0), self.columnCount(0)))
         self.layoutChanged.emit()
+        for row in range(0, self.rowCount()):
+            self.tableviewer.openPersistentEditor(self.index(row, 7))
 
     def headerData(self, rowcol, orientation, role):
         if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
@@ -230,6 +235,8 @@ class MyMainWindow(QMainWindow):
         self.pushButton_save_fund_group.clicked.connect(self.save_fund_group)
         self.comboBox_fund_group_list.activated.connect(self.load_fund_group)
         self.pushButton_simulate.clicked.connect(self.simulate_investment)
+        self.pushButton_accordingto_fund.clicked.connect(lambda:self.create_piechart(accordingto = 'total_wealth'))
+        self.pushButton_accordingto_profit.clicked.connect(lambda:self.create_piechart(accordingto = 'total_profit'))
         #self.values_sh000001 = []
         #self.values_sh000016 = []
         #self.values_sh000300 = []
@@ -305,14 +312,65 @@ class MyMainWindow(QMainWindow):
         code, done = QInputDialog.getText(self, '追加一行', '基金代码:')
         if done:
             # append_row = self.pandas_model._data[self.pandas_model._data['基金代码']==code][['选择','基金代码','基金简称','日期','单位净值']]
-            append_row = self.results_fund_rank[self.results_fund_rank['基金代码']==code][['基金代码','基金简称','日期','单位净值']]
+            append_row = self.results_fund_rank[self.results_fund_rank['基金代码']==code][['基金代码','基金简称']]
             append_row['购入日期'] = str([self.pandas_model._data['日期'][0]])
             append_row['购入数量'] = str([0])
             append_row['卖出日期'] = str([self.pandas_model._data['日期'][0]])
             append_row['卖出数量'] = str([0])
+            append_row['Button'] = 'button'
             append_row.insert(0,column = '选择', value = True)
             self.pandas_model_fund_group._data = pd.concat([self.pandas_model_fund_group._data,append_row])
             self.pandas_model_fund_group.update_view()
+
+    def create_piechart(self, accordingto = 'total_wealth'):
+        def _name(code):
+            return self.pandas_model_fund_group._data[self.pandas_model_fund_group._data['基金代码']==code].iloc[0]['基金简称']
+        series = QPieSeries()
+        if accordingto == 'total_wealth':
+            if not hasattr(self,'total_wealth_for_each_fund_today'):
+                return
+            if len(self.total_wealth_for_each_fund_today)==0:
+                return
+            total_wealth_for_each_fund_today = self.total_wealth_for_each_fund_today
+        else:
+            total_wealth_for_each_fund_today = {each:self.fund_profits_partial[each]['net_wealth'][-1] for each in self.fund_profits_partial}
+
+        sorted_dict = {_name(k):v for k, v in sorted(total_wealth_for_each_fund_today.items(), key=lambda item: item[1])}
+        for key, value in sorted_dict.items():
+            if accordingto == 'total_wealth':
+                series.append('{}:{}%'.format(key,round(value/sum(list(sorted_dict.values()))*100,2)), value)
+            else:
+                series.append('{}:{}%'.format(key,round(value,3)), value)
+ 
+        #adding slice
+        '''
+        slice = QPieSlice()
+        slice = series.slices()[3]
+        slice.setExploded(True)
+        slice.setLabelVisible(True)
+        slice.setPen(QPen(Qt.darkGreen, 2))
+        slice.setBrush(Qt.green)
+        '''
+        for i in range(5):
+            if (i+1)>len(series.slices()):
+                pass
+            else:
+                slice = series.slices()[-i-1]
+                slice.setLabelVisible(True)
+ 
+        chart = QChart()
+        chart.addSeries(series)
+        chart.createDefaultAxes()
+        chart.setAnimationOptions(QChart.SeriesAnimations)
+        if accordingto == 'total_wealth':
+            chart.setTitle("当日基金资产占比饼状图:基金总资产为{}元".format(round(sum(list(sorted_dict.values())),3)))
+        else:
+            chart.setTitle("当日基金收益率占比饼状图")
+ 
+        chart.legend().setVisible(True)
+        chart.legend().setAlignment(Qt.AlignLeft)
+        self.widget_fund_pie.setChart(chart)
+        self.widget_fund_pie.setRenderHint(QPainter.Antialiasing)
 
     def calc_profit(self):
         def _to_days(date_str):
@@ -368,7 +426,7 @@ class MyMainWindow(QMainWindow):
                 else:
                     fund_info_partial[each] = {'dates':fund_info[each]['dates'][begin_index:],
                                                'net_wealth':fund_info[each]['net_wealth'][begin_index:]}
-            
+            self.fund_profits_partial = fund_info_partial 
             colors = [(200,0,0),(0,128,0),(19,234,201),(195,46,212),(250,194,5),(54,55,55),(0,114,189),(217,83,25),(237,177,32),(126,47,142)]
             linestyles = [None, QtCore.Qt.DotLine, QtCore.Qt.DashLine]
             pens = []
@@ -431,7 +489,7 @@ class MyMainWindow(QMainWindow):
         output_dates = [(date_start + datetime.timedelta(days = i)).strftime('%Y-%m-%d') for i in range(0,interval_days+1)]
         return_dates = [(date_start + datetime.timedelta(days = i)-datetime.date(1, 1, 1)).days for i in range(0,interval_days+1)]
         for output_date in output_dates:
-            _profit, _amount, _cost = data_extractor.calc_profit(fund_info, purchase_info, output_date)
+            _profit, _amount, _cost, _ = data_extractor.calc_profit(fund_info, purchase_info, output_date)
             profits.append(_profit)
             total_investment.append(_amount)
             total_cost.append(_cost)
@@ -439,6 +497,7 @@ class MyMainWindow(QMainWindow):
         self.profits = profits
         self.total_investment = total_investment
         self.total_cost = total_cost
+        *_, self.total_wealth_for_each_fund_today = data_extractor.calc_profit(fund_info, purchase_info, output_dates[-1])
         #buy_in_dates, sell_out_dates = _extract_purchase_dates(purchase_info)
         buy_in_dates, sell_out_dates, buy_in_code, sell_out_code, buy_in_quantity, sell_out_quantity = _extract_purchase_dates(purchase_info)
         #plot the results

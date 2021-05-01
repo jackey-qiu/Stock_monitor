@@ -181,6 +181,7 @@ def calc_profit(fund_info, purchase_info, output_date):
 
     cost_total = 0
     quantity_in_market = {}
+    total_wealth_in_market = {}
     amount_in_hand = 0
     for each in purchase_info:
         quantity_in_market[each] = 0
@@ -192,11 +193,16 @@ def calc_profit(fund_info, purchase_info, output_date):
             if _later_date(output_date, item) and purchase_info[each]['sell_out_quantity'][i]!=0:
                 quantity_in_market[each] -= purchase_info[each]['sell_out_quantity'][i]
                 amount_in_hand += purchase_info[each]['sell_out_quantity'][i]*_get_price(each,purchase_info[each]['sell_out_date'][i])
-    amount_in_market = sum([quantity_in_market[each]*_get_price(each, output_date) for each in quantity_in_market])
+    #amount_in_market = sum([quantity_in_market[each]*_get_price(each, output_date) for each in quantity_in_market])
+    amount_in_market = 0
+    for each in quantity_in_market:
+        _amount = quantity_in_market[each]*_get_price(each, output_date)
+        total_wealth_in_market[each] = _amount
+        amount_in_market =amount_in_market+_amount 
     # print(cost_total, amount_in_market, amount_in_hand)
     if cost_total==0:
-        return 0, 0, 0
-    return round((amount_in_market + amount_in_hand - cost_total)/cost_total*100,2), amount_in_market+amount_in_hand, cost_total
+        return 0, 0, 0, 0
+    return round((amount_in_market + amount_in_hand - cost_total)/cost_total*100,2), amount_in_market+amount_in_hand, cost_total, total_wealth_in_market
     
 '''
 get value of each time use: e.g. jsContent.eval('fS_name')

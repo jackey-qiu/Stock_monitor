@@ -2592,7 +2592,7 @@
                 <item>
                  <widget class="QTabWidget" name="tabWidget_3">
                   <property name="currentIndex">
-                   <number>1</number>
+                   <number>2</number>
                   </property>
                   <widget class="QWidget" name="tab_2">
                    <attribute name="title">
@@ -2611,6 +2611,47 @@
                    <layout class="QVBoxLayout" name="verticalLayout_11">
                     <item>
                      <widget class="GraphicsLayoutWidget" name="widget_fund_groups" native="true"/>
+                    </item>
+                   </layout>
+                  </widget>
+                  <widget class="QWidget" name="tab_10">
+                   <attribute name="title">
+                    <string>基金占比</string>
+                   </attribute>
+                   <layout class="QVBoxLayout" name="verticalLayout_15">
+                    <item>
+                     <layout class="QHBoxLayout" name="horizontalLayout_15">
+                      <item>
+                       <widget class="QPushButton" name="pushButton_accordingto_fund">
+                        <property name="text">
+                         <string>根据基金资产</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QPushButton" name="pushButton_accordingto_profit">
+                        <property name="text">
+                         <string>根据收益率</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <spacer name="horizontalSpacer_11">
+                        <property name="orientation">
+                         <enum>Qt::Horizontal</enum>
+                        </property>
+                        <property name="sizeHint" stdset="0">
+                         <size>
+                          <width>40</width>
+                          <height>20</height>
+                         </size>
+                        </property>
+                       </spacer>
+                      </item>
+                     </layout>
+                    </item>
+                    <item>
+                     <widget class="QChartView" name="widget_fund_pie" native="true"/>
                     </item>
                    </layout>
                   </widget>
@@ -2680,6 +2721,12 @@
    <class>TerminalWidget</class>
    <extends>QWidget</extends>
    <header location="global">terminal_widget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>QChartView</class>
+   <extends>QWidget</extends>
+   <header>PyQt5.QtChart.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
