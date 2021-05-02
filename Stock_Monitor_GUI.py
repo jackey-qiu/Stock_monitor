@@ -235,8 +235,9 @@ class MyMainWindow(QMainWindow):
         self.pushButton_save_fund_group.clicked.connect(self.save_fund_group)
         self.comboBox_fund_group_list.activated.connect(self.load_fund_group)
         self.pushButton_simulate.clicked.connect(self.simulate_investment)
-        self.pushButton_accordingto_fund.clicked.connect(lambda:self.create_piechart(accordingto = 'total_wealth'))
-        self.pushButton_accordingto_profit.clicked.connect(lambda:self.create_piechart(accordingto = 'total_profit'))
+        self.pushButton_accordingto_fund.clicked.connect(lambda:self.create_piechart(accordingto = 'total_wealth',accordingto_fund_type=False))
+        self.pushButton_accordingto_fund_type.clicked.connect(lambda:self.create_piechart(accordingto = 'total_wealth',accordingto_fund_type=True))
+        self.pushButton_accordingto_profit.clicked.connect(lambda:self.create_piechart(accordingto = 'total_profit',accordingto_fund_type=False))
         #self.values_sh000001 = []
         #self.values_sh000016 = []
         #self.values_sh000300 = []
@@ -266,6 +267,8 @@ class MyMainWindow(QMainWindow):
         self.index_code_name = pd.read_csv(os.path.join(script_path, 'code_name','index_code_name.csv'),dtype = {'symbol':np.str})
         self.stock_code_name_a_stock = pd.read_csv(os.path.join(script_path, 'code_name','stock_code_name.csv'),dtype = {'symbol':np.str})
         self.stock_code_name_hk_stock = pd.read_csv(os.path.join(script_path, 'code_name','stock_code_name_hk.csv'),dtype = {'symbol':np.str})
+        self.fund_code_name = pd.read_csv(os.path.join(script_path, 'code_name','fund_code.csv'),dtype = str)
+        self.fund_code_name.index = self.fund_code_name['fund_code']
 
     def fill_fund_groups(self):
         self.comboBox_fund_group_list.clear()
@@ -322,7 +325,7 @@ class MyMainWindow(QMainWindow):
             self.pandas_model_fund_group._data = pd.concat([self.pandas_model_fund_group._data,append_row])
             self.pandas_model_fund_group.update_view()
 
-    def create_piechart(self, accordingto = 'total_wealth'):
+    def create_piechart(self, accordingto = 'total_wealth', accordingto_fund_type = False):
         def _name(code):
             return self.pandas_model_fund_group._data[self.pandas_model_fund_group._data['基金代码']==code].iloc[0]['基金简称']
         series = QPieSeries()
@@ -332,10 +335,22 @@ class MyMainWindow(QMainWindow):
             if len(self.total_wealth_for_each_fund_today)==0:
                 return
             total_wealth_for_each_fund_today = self.total_wealth_for_each_fund_today
+            if accordingto_fund_type:
+                total_wealth_fund_type = {}
+                for each in total_wealth_for_each_fund_today:
+                    type_temp = self.fund_code_name.loc[each]['fund_type']
+                    if type_temp in total_wealth_fund_type:
+                        total_wealth_fund_type[type_temp] = total_wealth_fund_type[type_temp] + total_wealth_for_each_fund_today[each]
+                    else:
+                        total_wealth_fund_type[type_temp] =  total_wealth_for_each_fund_today[each]
+                total_wealth_for_each_fund_today = total_wealth_fund_type
+                # print(total_wealth_for_each_fund_today)
         else:
             total_wealth_for_each_fund_today = {each:self.fund_profits_partial[each]['net_wealth'][-1] for each in self.fund_profits_partial}
-
-        sorted_dict = {_name(k):v for k, v in sorted(total_wealth_for_each_fund_today.items(), key=lambda item: item[1])}
+        if not accordingto_fund_type:
+            sorted_dict = {_name(k):v for k, v in sorted(total_wealth_for_each_fund_today.items(), key=lambda item: item[1])}
+        else:
+            sorted_dict = {k:v for k, v in sorted(total_wealth_for_each_fund_today.items(), key=lambda item: item[1])}
         for key, value in sorted_dict.items():
             if accordingto == 'total_wealth':
                 series.append('{}:{}%'.format(key,round(value/sum(list(sorted_dict.values()))*100,2)), value)
