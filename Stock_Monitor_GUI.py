@@ -152,7 +152,7 @@ class PandasModel(QtCore.QAbstractTableModel):
         self.dataChanged.emit(self.createIndex(0, 0), self.createIndex(self.rowCount(0), self.columnCount(0)))
         self.layoutChanged.emit()
         for row in range(0, self.rowCount()):
-            self.tableviewer.openPersistentEditor(self.index(row, 7))
+            self.tableviewer.openPersistentEditor(self.index(row, -1))
 
     def headerData(self, rowcol, orientation, role):
         if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
@@ -280,17 +280,21 @@ class MyMainWindow(QMainWindow):
         data = pd.read_csv(path,dtype = str)
         data['选择'] = data['选择'].astype(bool)
         data.sort_values(by=['基金代码','购入日期'], inplace = True)
+        data = data.reset_index(drop=True)
         if not hasattr(self, 'pandas_model_fund_group'):
-            cols = ['选择','基金代码','基金简称','购入日期','购入数量','卖出日期','卖出数量']
+            cols = ['选择','基金代码','基金简称','购入日期','购入数量','购入总额','卖出日期','卖出数量','卖出总额']
             self.pandas_model_fund_group = PandasModel(data = data[cols],tableviewer = self.tableView_fund_group_list, parent=self, button_column=True) 
             self.tableView_fund_group_list.setModel(self.pandas_model_fund_group)
-            self.tableView_fund_group_list.setItemDelegateForColumn(7, ButtonDelegate(self))
+            # self.tableView_fund_group_list.setItemDelegateForColumn(7, ButtonDelegate(self))
+            self.tableView_fund_group_list.setItemDelegateForColumn(9, ButtonDelegate(self))
             self.tableView_fund_group_list.resizeColumnsToContents() 
             self.tableView_fund_group_list.setSelectionBehavior(PyQt5.QtWidgets.QAbstractItemView.SelectRows)
             for row in range(0, self.pandas_model_fund_group.rowCount()):
-                self.tableView_fund_group_list.openPersistentEditor(self.pandas_model_fund_group.index(row, 7))
+                # self.tableView_fund_group_list.openPersistentEditor(self.pandas_model_fund_group.index(row, 7))
+                self.tableView_fund_group_list.openPersistentEditor(self.pandas_model_fund_group.index(row, 9))
         else:
             self.pandas_model_fund_group._data = data
+        #self.pandas_model_fund_group._data = pandas_model_fund_group._data.reset_index(drop=True)
         self.pandas_model_fund_group.update_view()
 
     def save_fund_group(self):
@@ -305,8 +309,10 @@ class MyMainWindow(QMainWindow):
         df_selected_fund_groups = self.pandas_model._data[self.pandas_model._data['选择']][['选择','基金代码','基金简称','日期','单位净值']]
         df_selected_fund_groups['购入日期'] = str([self.pandas_model._data['日期'][0]])
         df_selected_fund_groups['购入数量'] = str([0])
+        df_selected_fund_groups['购入总额'] = str([0])
         df_selected_fund_groups['卖出日期'] = str([self.pandas_model._data['日期'][0]])
         df_selected_fund_groups['卖出数量'] = str([0])
+        df_selected_fund_groups['卖出总额'] = str([0])
         self.pandas_model_fund_group = PandasModel(data=df_selected_fund_groups,tableviewer = self.tableView_fund_group_list, parent=self)
         self.tableView_fund_group_list.setModel(self.pandas_model_fund_group)
         self.tableView_fund_group_list.resizeColumnsToContents() 
@@ -318,11 +324,14 @@ class MyMainWindow(QMainWindow):
             append_row = self.results_fund_rank[self.results_fund_rank['基金代码']==code][['基金代码','基金简称']]
             append_row['购入日期'] = str([self.pandas_model._data['日期'][0]])
             append_row['购入数量'] = str([0])
+            append_row['购入总额'] = str([0])
             append_row['卖出日期'] = str([self.pandas_model._data['日期'][0]])
             append_row['卖出数量'] = str([0])
+            append_row['卖出总额'] = str([0])
             append_row['Button'] = 'button'
             append_row.insert(0,column = '选择', value = True)
             self.pandas_model_fund_group._data = pd.concat([self.pandas_model_fund_group._data,append_row])
+            self.pandas_model_fund_group._data = pandas_model_fund_group._data.reset_index(drop=True) 
             self.pandas_model_fund_group.update_view()
 
     def create_piechart(self, accordingto = 'total_wealth', accordingto_fund_type = False):
@@ -474,6 +483,10 @@ class MyMainWindow(QMainWindow):
                 ax_handle.plot([begin_date, end_date], [0,0],  pen = pg.mkPen(color=(200,200,200), style = QtCore.Qt.DotLine, width = 2))
             return fund_profiles, fund_points
 
+        def _get_price(fund_info, code, date_str):
+            days = (datetime.datetime.strptime(date_str, "%Y-%m-%d").date() - datetime.date(1, 1, 1)).days
+            return fund_info[code]['net_wealth'][np.argmin(np.abs(np.array(fund_info[code]['dates'])-days))]
+
         profits = []
         total_investment = []
         total_cost = []
@@ -492,6 +505,18 @@ class MyMainWindow(QMainWindow):
                 fund_code = self.pandas_model_fund_group._data.iloc[i]['基金代码']
                 if fund_code not in purchase_info:
                     purchase_info[fund_code] = {}
+                # print(i) 
+                if eval(self.pandas_model_fund_group._data.iloc[i]['购入数量'])==[0]:
+                    new_value = str([eval(self.pandas_model_fund_group._data.iloc[i]['购入总额'])[0]/\
+                        _get_price(fund_info, fund_code, eval(self.pandas_model_fund_group._data.iloc[i]['购入日期'])[0])])
+                    self.pandas_model_fund_group._data['购入数量'][i] = new_value
+                    # print('yes', new_value, i)
+                #else:
+                #    print('NO')
+                if eval(self.pandas_model_fund_group._data.iloc[i]['卖出数量'])==[0]:
+                    self.pandas_model_fund_group._data['卖出数量'][i] = str([eval(self.pandas_model_fund_group._data.iloc[i]['卖出总额'])[0]/\
+                        _get_price(fund_info, fund_code, eval(self.pandas_model_fund_group._data.iloc[i]['卖出日期'])[0])])
+
                 purchase_info[fund_code] = \
                         {
                         'buy_in_date':purchase_info[fund_code].get('buy_in_date',[])+eval(self.pandas_model_fund_group._data.iloc[i]['购入日期']), 
