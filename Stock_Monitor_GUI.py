@@ -331,7 +331,7 @@ class MyMainWindow(QMainWindow):
             append_row['Button'] = 'button'
             append_row.insert(0,column = '选择', value = True)
             self.pandas_model_fund_group._data = pd.concat([self.pandas_model_fund_group._data,append_row])
-            self.pandas_model_fund_group._data = pandas_model_fund_group._data.reset_index(drop=True) 
+            self.pandas_model_fund_group._data = self.pandas_model_fund_group._data.reset_index(drop=True) 
             self.pandas_model_fund_group.update_view()
 
     def create_piechart(self, accordingto = 'total_wealth', accordingto_fund_type = False):
